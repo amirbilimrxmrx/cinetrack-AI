@@ -939,22 +939,29 @@
     }
 
     // ================= Dynamic Dashboard & Filter =================
+    function calculateGenreStats() {
+      let counts = {};
+      state.items.forEach(item => {
+        if(item.genre && item.genre !== 'N/A') {
+          item.genre.split(',').forEach(g => {
+            const clean = g.trim();
+            if(clean) counts[clean] = (counts[clean] || 0) + 1;
+          });
+        }
+      });
+      return counts;
+    }
+
     function extractAndRenderGenres() {
       const select = document.getElementById("genreFilterSelect");
       const currentSelected = state.filters.genre;
-      
-      let genresSet = new Set();
-      state.items.forEach(item => {
-        if (item.genre && item.genre !== 'N/A') {
-          item.genre.split(',').forEach(g => genresSet.add(g.trim()));
-        }
-      });
+      const counts = calculateGenreStats();
 
       select.innerHTML = '<option value="all">فیلتر ژانر (همه)</option>';
-      Array.from(genresSet).sort().forEach(genre => {
+      Object.keys(counts).sort().forEach(genre => {
         const option = document.createElement("option");
         option.value = genre;
-        option.innerText = genre;
+        option.innerText = `${genre} (${counts[genre]})`;
         if(genre === currentSelected) option.selected = true;
         select.appendChild(option);
       });
@@ -981,15 +988,7 @@
       const ratedUser = state.items.filter(i => i.userRating > 0);
       const avgUser = ratedUser.length ? (ratedUser.reduce((acc, i) => acc + i.userRating, 0) / ratedUser.length).toFixed(1) : "N/A";
 
-      let counts = {};
-      state.items.forEach(item => {
-        if(item.genre && item.genre !== 'N/A') {
-          item.genre.split(',').forEach(g => {
-            const clean = g.trim();
-            counts[clean] = (counts[clean] || 0) + 1;
-          });
-        }
-      });
+      const counts = calculateGenreStats();
       const topGenre = Object.keys(counts).reduce((a, b) => counts[a] > counts[b] ? a : b, "N/A");
 
       dash.innerHTML = `
@@ -1250,22 +1249,23 @@
       if (!navigator.onLine) throw new Error("NO_INTERNET");
 
       const controller = new AbortController();
-      const id = setTimeout(() => controller.abort(), 30000);
+      const timeoutId = setTimeout(() => controller.abort(), 30000);
 
       try {
         const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
           method: "POST",
           headers: {
             "Authorization": `Bearer ${apiKey.trim()}`,
-            "Content-Type": "application/json",
-            "HTTP-Referer": window.location.href,
-            "X-Title": "CineTrack Ultimate"
+            "Content-Type": "application/json"
           },
-          body: JSON.stringify({ model: model, messages: [{ role: "user", content: prompt }] }),
+          body: JSON.stringify({ 
+            model: model, 
+            messages: [{ role: "user", content: prompt }] 
+          }),
           signal: controller.signal
         });
 
-        clearTimeout(id);
+        clearTimeout(timeoutId);
 
         if (response.status === 401 || response.status === 403) throw new Error("INVALID_KEY");
         if (response.status === 429) throw new Error("RATE_LIMIT");
@@ -1273,10 +1273,12 @@
         if (!response.ok) throw new Error("SERVER_ERROR");
 
         const data = await response.json();
-        if (data?.choices?.[0]?.message?.content) return data.choices[0].message.content.trim();
+        if (data && data.choices && data.choices[0] && data.choices[0].message) {
+          return data.choices[0].message.content.trim();
+        }
         throw new Error("EMPTY_RESPONSE");
       } catch (err) {
-        clearTimeout(id);
+        clearTimeout(timeoutId);
         if (err.name === 'AbortError') throw new Error("TIMEOUT");
         throw err;
       }
@@ -1284,13 +1286,14 @@
 
     function translateAiError(err) {
       const msg = err.message;
-      if (msg === "KEY_MISSING") return "❌ کلید API یافت نشد. لطفاً از بخش تنظیمات کلید OpenRouter را وارد کنید.";
-      if (msg === "NO_INTERNET") return "❌ اتصال اینترنت شما قطع است.";
-      if (msg === "TIMEOUT") return "❌ مهلت پاسخگویی سرور پایان یافت (Timeout). ممکن است بار ترافیکی مدل بالا باشد.";
-      if (msg === "RATE_LIMIT") return "❌ محدودیت درخواست یا اتمام شارژ (Rate Limit).";
-      if (msg === "INVALID_KEY") return "❌ کلید API نامعتبر است.";
-      if (msg === "BAD_REQUEST") return "❌ درخواست نامعتبر (Bad Request). احتمالاً نام مدل انتخابی در شبکه وجود ندارد.";
-      return "❌ خطای ناشناخته در ارتباط با سرور هوش مصنوعی رخ داد.";
+      if (msg === "KEY_MISSING") return "❌ کلید API یافت نشد. لطفاً از بخش تنظیمات بالا سمت راست، کلید OpenRouter خود را وارد کنید.";
+      if (msg === "NO_INTERNET") return "❌ اتصال اینترنت شما برقرار نیست. لطفا وضعیت شبکه را چک کنید.";
+      if (msg === "TIMEOUT") return "❌ مهلت پاسخگویی سرور پایان یافت (Timeout). مدل شلوغ است یا ارتباط کند است.";
+      if (msg === "RATE_LIMIT") return "❌ محدودیت درخواست یا اتمام حجم/اعتبار کلید در OpenRouter (Rate Limit - 429).";
+      if (msg === "INVALID_KEY") return "❌ کلید OpenRouter وارد شده اشتباه یا نامعتبر است (401/403). تنظیمات را مجددا چک کنید.";
+      if (msg === "BAD_REQUEST") return "❌ درخواست نامعتبر (Bad Request - 400). شناسه ساختاری مدل انتخابی شما در OpenRouter وجود ندارد.";
+      if (msg === "EMPTY_RESPONSE") return "❌ سرور پاسخ خالی برگرداند. مجددا تلاش کنید.";
+      return `❌ خطای ارتباطی رخ داد: ${err.message || "پاسخ از سرور دریافت نشد"}. مطمئن شوید فیلترشکن شما روشن است یا کلید شما اعتبار دارد.`;
     }
 
     async function askAIBoutMovie(id, forceRefresh = false) {
@@ -1313,7 +1316,7 @@
 نقد شخصی کاربر روی این اثر: "${item.personalReview || 'نوشته نشده'}"
 عناوین اخیراً اضافه شده توسط کاربر (برای درک سلیقه): [${recent}]
 
-خروجی باید دقیقاً دارای ۴ بخش زیر (به صورت Markdown) باشد:
+خروجی باید دقیقاً دارای ۴ بخش زیر (به صورت شماره‌گذاری شده و واضح) باشد:
 ۱. تحلیل سلیقه (تطابق این اثر با رفتار و آرشیو کاربر)
 ۲. دلیل علاقه احتمالی (علل روانشناختی یا ساختاری جذب کاربر به اثر)
 ۳. نقاط قوت اثر (جنبه‌های هنری، تکنیکی و روایی)
@@ -1329,22 +1332,31 @@
 
     async function generateGlobalAIAnalysis(forceRefresh = false) {
       const box = document.getElementById("globalAiResponse");
-      if (state.items.length === 0) { box.innerText = "آرشیو خالی است."; return; }
+      if (state.items.length === 0) { box.innerText = "آرشیو شما خالی است. ابتدا چند فیلم اضافه کنید."; return; }
       if (state.globalAiCache && !forceRefresh) { box.innerText = state.globalAiCache; return; }
 
-      box.innerText = "⏳ در حال پردازش کل آرشیو و نگارش پروفایل روانشناختی تماشای شما...";
+      box.innerText = "⏳ در حال پردازش محاسبات ژانرها و فرستادن اطلاعات آماری به هوش مصنوعی برای نگارش تحلیل روانشناختی...";
 
-      const data = state.items.map(i => `نام: ${i.title} | ژانر: ${i.genre} | نمره من: ${i.userRating} | نمره OMDb: ${i.imdb} | وضعیت: ${i.status}`).join('\n');
+      // محاسبه دقیق و ریاضی سهم هر ژانر در دیتابیس برای جلوگیری از باگ تکرار خودکار کلمه دراما
+      const genreCounts = calculateGenreStats();
+      let genreStatsText = Object.keys(genreCounts)
+        .map(g => `- ژانر "${g}": تعداد تکرار در آرشیو = ${genreCounts[g]} بار`)
+        .join('\n');
+
+      const data = state.items.map(i => `- ${i.title} [ژانر: ${i.genre} | امتیاز من: ${i.userRating} | وضعیت: ${i.status}]`).join('\n');
       
-      const prompt = `پاسخ تماماً به زبان فارسی ساختاریافته (Bullet Points) باشد.
-دیتای کامل فیلم‌ها و سریال‌های کاربر:
+      const prompt = `پاسخ تماماً به زبان فارسی علمی، دقیق، ساختاریافته و با لحنی جذاب باشد.
+اطلاعات دقیق استخراج شده از آرشیو ریاضی کاربر:
+${genreStatsText}
+
+لیست کامل فیلم‌ها و سریال‌های ذخیره شده:
 ${data}
 
-لطفاً رفتارشناسی دقیق انجام داده و ۴ بخش زیر را استخراج کن:
-۱. ژانر محبوب (اصلی و فرعی) کاربر.
-۲. تحلیل روانشناختی (چه الگوهای رفتاری در انتخاب و نمره‌دهی کاربر دیده می‌شود؟).
-۳. پیشنهاد ۳ شاهکار هنری (خارج از این لیست) که کاربر مطلقاً باید ببیند.
-۴. مقایسه و تضاد بین آثار تکمیل‌شده (Completed) و برنامه‌ریزی‌شده (Planned).`;
+با توجه به آمارهای ریاضی بالا که تعداد دقیق فیلم‌های تماشا شده در هر ژانر را نشان می‌دهد، لطفاً تحلیل خود را دقیقاً در این ۴ بخش تولید کن:
+۱. ژانر محبوب (بر اساس آمار دقیق بالا، مشخص کن ژانر اول و دوم محبوب کاربر چیست و سهم فرعی‌ها چقدر است)
+۲. تحلیل روانشناختی عادات فیلم‌بینی (چه الگوهای رفتاری در انتخاب‌ها، نمرات و زمان‌های کاربر دیده می‌شود؟)
+۳. پیشنهاد ۳ شاهکار هنری برتر جهان (خارج از لیست بالا) که با توجه به آمار ژانرهای کاربر، قطعا از آنها لذت خواهد برد (با ذکر نام انگلیسی).
+۴. مقایسه و تضاد بین آثار تکمیل‌شده (Completed) و برنامه‌ریزی‌شده (Planned) کاربر.`;
 
       try {
         const res = await callOpenRouterAPI(prompt);
@@ -1383,7 +1395,7 @@ ${data}
           const parsed = JSON.parse(e.target.result);
           if (confirm(`آیا مایل به جایگزینی و بازنویسی کامل آرشیو فعلی با فایل بکاپ هستید؟`)) {
             if (Array.isArray(parsed)) {
-              state.items = parsed; // Legacy support
+              state.items = parsed;
             } else if (parsed.items) {
               state.items = parsed.items;
               if(parsed.notes !== undefined) localStorage.setItem("cinetrack_general_notes", parsed.notes);
@@ -1398,13 +1410,13 @@ ${data}
             }
             saveStateToStorage();
             state.selectedId = null;
-            init(); // Hot re-render
+            init();
             alert("بازیابی با موفقیت انجام شد.");
           }
         } catch (err) { alert("خطا در پردازش فایل. فایل معتبر نیست."); }
       };
       reader.readAsText(file);
-      event.target.value = ''; // Reset input
+      event.target.value = '';
     }
 
     // ================= Modals & Settings =================
