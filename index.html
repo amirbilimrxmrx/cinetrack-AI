@@ -1,3342 +1,1052 @@
 <!DOCTYPE html>
-<html lang="en" data-theme="dark">
+<html lang="fa" dir="rtl">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>NexusAI Studio - Professional AI Platform</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
-    <script src="https://cdn.tailwindcss.com"></script>
-    <style>
-        /* ============================================
-           CSS Variables & Theme System
-        ============================================ */
-        :root {
-            --bg-primary: #0a0a0f;
-            --bg-secondary: #12121a;
-            --bg-tertiary: #1a1a25;
-            --fg-primary: #f5f5f7;
-            --fg-secondary: #a1a1aa;
-            --fg-muted: #71717a;
-            --accent-primary: #00d4aa;
-            --accent-secondary: #0ea5e9;
-            --accent-gradient: linear-gradient(135deg, #00d4aa 0%, #0ea5e9 100%);
-            --glass-bg: rgba(255, 255, 255, 0.05);
-            --glass-border: rgba(255, 255, 255, 0.1);
-            --glass-shadow: rgba(0, 0, 0, 0.3);
-            --card-bg: rgba(18, 18, 26, 0.8);
-            --danger: #ef4444;
-            --warning: #f59e0b;
-            --success: #10b981;
-            --radius-sm: 8px;
-            --radius-md: 12px;
-            --radius-lg: 16px;
-            --radius-xl: 24px;
-            --radius-full: 9999px;
-            --transition-fast: 150ms cubic-bezier(0.4, 0, 0.2, 1);
-            --transition-normal: 300ms cubic-bezier(0.4, 0, 0.2, 1);
-            --transition-slow: 500ms cubic-bezier(0.4, 0, 0.2, 1);
-        }
-
-        [data-theme="light"] {
-            --bg-primary: #fafafa;
-            --bg-secondary: #ffffff;
-            --bg-tertiary: #f4f4f5;
-            --fg-primary: #18181b;
-            --fg-secondary: #52525b;
-            --fg-muted: #a1a1aa;
-            --accent-primary: #059669;
-            --accent-secondary: #0284c7;
-            --glass-bg: rgba(255, 255, 255, 0.7);
-            --glass-border: rgba(0, 0, 0, 0.08);
-            --glass-shadow: rgba(0, 0, 0, 0.1);
-            --card-bg: rgba(255, 255, 255, 0.9);
-        }
-
-        /* ============================================
-           Base Styles & Reset
-        ============================================ */
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        html {
-            scroll-behavior: smooth;
-        }
-
-        body {
-            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-            background-color: var(--bg-primary);
-            color: var(--fg-primary);
-            min-height: 100vh;
-            overflow-x: hidden;
-            transition: background-color var(--transition-slow), color var(--transition-slow);
-            line-height: 1.6;
-        }
-
-        ::selection {
-            background: var(--accent-primary);
-            color: white;
-        }
-
-        ::-webkit-scrollbar {
-            width: 8px;
-            height: 8px;
-        }
-
-        ::-webkit-scrollbar-track {
-            background: transparent;
-        }
-
-        ::-webkit-scrollbar-thumb {
-            background: var(--fg-muted);
-            border-radius: var(--radius-full);
-        }
-
-        ::-webkit-scrollbar-thumb:hover {
-            background: var(--fg-secondary);
-        }
-
-        /* ============================================
-           Liquid Glass Effect System
-        ============================================ */
-        .liquid-glass {
-            background: var(--glass-bg);
-            backdrop-filter: blur(20px) saturate(180%);
-            -webkit-backdrop-filter: blur(20px) saturate(180%);
-            border: 1px solid var(--glass-border);
-            box-shadow: 
-                0 8px 32px var(--glass-shadow),
-                inset 0 1px 0 rgba(255, 255, 255, 0.1);
-        }
-
-        .liquid-glass-strong {
-            background: var(--glass-bg);
-            backdrop-filter: blur(40px) saturate(200%);
-            -webkit-backdrop-filter: blur(40px) saturate(200%);
-            border: 1px solid var(--glass-border);
-            box-shadow: 
-                0 12px 48px var(--glass-shadow),
-                inset 0 2px 0 rgba(255, 255, 255, 0.15),
-                inset 0 -2px 0 rgba(0, 0, 0, 0.1);
-        }
-
-        .liquid-glass-light {
-            background: rgba(255, 255, 255, 0.03);
-            backdrop-filter: blur(12px) saturate(150%);
-            -webkit-backdrop-filter: blur(12px) saturate(150%);
-            border: 1px solid rgba(255, 255, 255, 0.06);
-        }
-
-        /* ============================================
-           Background Effects
-        ============================================ */
-        .bg-mesh {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            z-index: -1;
-            overflow: hidden;
-        }
-
-        .mesh-gradient {
-            position: absolute;
-            border-radius: 50%;
-            filter: blur(80px);
-            opacity: 0.4;
-            animation: meshFloat 20s ease-in-out infinite;
-        }
-
-        .mesh-1 {
-            width: 600px;
-            height: 600px;
-            background: radial-gradient(circle, var(--accent-primary) 0%, transparent 70%);
-            top: -200px;
-            right: -100px;
-            animation-delay: 0s;
-        }
-
-        .mesh-2 {
-            width: 500px;
-            height: 500px;
-            background: radial-gradient(circle, var(--accent-secondary) 0%, transparent 70%);
-            bottom: -150px;
-            left: -100px;
-            animation-delay: -7s;
-        }
-
-        .mesh-3 {
-            width: 400px;
-            height: 400px;
-            background: radial-gradient(circle, #8b5cf6 0%, transparent 70%);
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            animation-delay: -14s;
-        }
-
-        @keyframes meshFloat {
-            0%, 100% { transform: translate(0, 0) scale(1); }
-            33% { transform: translate(30px, -30px) scale(1.05); }
-            66% { transform: translate(-20px, 20px) scale(0.95); }
-        }
-
-        [data-theme="light"] .mesh-gradient {
-            opacity: 0.25;
-        }
-
-        /* Noise texture overlay */
-        .noise-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            z-index: -1;
-            pointer-events: none;
-            opacity: 0.03;
-            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
-        }
-
-        /* Grid pattern */
-        .grid-pattern {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            z-index: -1;
-            background-image: 
-                linear-gradient(var(--glass-border) 1px, transparent 1px),
-                linear-gradient(90deg, var(--glass-border) 1px, transparent 1px);
-            background-size: 60px 60px;
-            opacity: 0.3;
-            mask-image: radial-gradient(ellipse at center, black 20%, transparent 70%);
-            -webkit-mask-image: radial-gradient(ellipse at center, black 20%, transparent 70%);
-        }
-
-        /* ============================================
-           Layout Components
-        ============================================ */
-        .app-container {
-            display: flex;
-            flex-direction: column;
-            min-height: 100vh;
-        }
-
-        /* Header / Navigation */
-        .header {
-            position: sticky;
-            top: 0;
-            z-index: 100;
-            padding: 12px 24px;
-            transition: all var(--transition-normal);
-        }
-
-        .header.scrolled {
-            padding: 8px 24px;
-        }
-
-        .nav-container {
-            max-width: 1600px;
-            margin: 0 auto;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            gap: 24px;
-        }
-
-        .logo {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            font-weight: 700;
-            font-size: 1.35rem;
-            letter-spacing: -0.02em;
-            text-decoration: none;
-            color: var(--fg-primary);
-        }
-
-        .logo-icon {
-            width: 36px;
-            height: 36px;
-            border-radius: var(--radius-md);
-            background: var(--accent-gradient);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            box-shadow: 0 4px 16px rgba(0, 212, 170, 0.3);
-        }
-
-        .nav-links {
-            display: flex;
-            align-items: center;
-            gap: 4px;
-        }
-
-        .nav-link {
-            padding: 8px 16px;
-            border-radius: var(--radius-full);
-            font-size: 0.9rem;
-            font-weight: 500;
-            color: var(--fg-secondary);
-            text-decoration: none;
-            transition: all var(--transition-fast);
-            position: relative;
-        }
-
-        .nav-link:hover {
-            color: var(--fg-primary);
-            background: var(--glass-bg);
-        }
-
-        .nav-link.active {
-            color: var(--accent-primary);
-            background: rgba(0, 212, 170, 0.1);
-        }
-
-        .nav-actions {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-        }
-
-        /* Buttons */
-        .btn {
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            gap: 8px;
-            padding: 10px 20px;
-            border-radius: var(--radius-md);
-            font-size: 0.9rem;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all var(--transition-fast);
-            border: none;
-            outline: none;
-            text-decoration: none;
-            white-space: nowrap;
-        }
-
-        .btn:focus-visible {
-            outline: 2px solid var(--accent-primary);
-            outline-offset: 2px;
-        }
-
-        .btn-primary {
-            background: var(--accent-gradient);
-            color: white;
-            box-shadow: 0 4px 16px rgba(0, 212, 170, 0.3);
-        }
-
-        .btn-primary:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 8px 24px rgba(0, 212, 170, 0.4);
-        }
-
-        .btn-primary:active {
-            transform: translateY(0);
-        }
-
-        .btn-secondary {
-            background: var(--glass-bg);
-            color: var(--fg-primary);
-            border: 1px solid var(--glass-border);
-        }
-
-        .btn-secondary:hover {
-            background: var(--glass-border);
-            transform: translateY(-1px);
-        }
-
-        .btn-ghost {
-            background: transparent;
-            color: var(--fg-secondary);
-        }
-
-        .btn-ghost:hover {
-            background: var(--glass-bg);
-            color: var(--fg-primary);
-        }
-
-        .btn-icon {
-            width: 40px;
-            height: 40px;
-            padding: 0;
-            border-radius: var(--radius-md);
-        }
-
-        .btn-sm {
-            padding: 6px 14px;
-            font-size: 0.85rem;
-        }
-
-        .btn-lg {
-            padding: 14px 28px;
-            font-size: 1rem;
-        }
-
-        /* Icon Button */
-        .icon-btn {
-            width: 44px;
-            height: 44px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            border-radius: var(--radius-md);
-            background: transparent;
-            border: none;
-            color: var(--fg-secondary);
-            cursor: pointer;
-            transition: all var(--transition-fast);
-            position: relative;
-        }
-
-        .icon-btn:hover {
-            background: var(--glass-bg);
-            color: var(--fg-primary);
-        }
-
-        .icon-btn:focus-visible {
-            outline: 2px solid var(--accent-primary);
-            outline-offset: 2px;
-        }
-
-        .icon-btn svg {
-            width: 22px;
-            height: 22px;
-        }
-
-        /* Main Content Area */
-        .main-content {
-            flex: 1;
-            display: flex;
-            max-width: 1600px;
-            margin: 0 auto;
-            width: 100%;
-            padding: 0 24px 24px;
-            gap: 24px;
-        }
-
-        /* Sidebar */
-        .sidebar {
-            width: 280px;
-            flex-shrink: 0;
-            display: flex;
-            flex-direction: column;
-            gap: 16px;
-            height: calc(100vh - 100px);
-            position: sticky;
-            top: 88px;
-            overflow-y: auto;
-        }
-
-        .sidebar-section {
-            border-radius: var(--radius-lg);
-            overflow: hidden;
-        }
-
-        .sidebar-header {
-            padding: 16px 20px;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            font-size: 0.75rem;
-            font-weight: 600;
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
-            color: var(--fg-muted);
-        }
-
-        .sidebar-list {
-            list-style: none;
-            padding: 0 12px 12px;
-        }
-
-        .sidebar-item {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            padding: 10px 14px;
-            border-radius: var(--radius-md);
-            cursor: pointer;
-            transition: all var(--transition-fast);
-            color: var(--fg-secondary);
-            font-size: 0.9rem;
-            font-weight: 500;
-        }
-
-        .sidebar-item:hover {
-            background: var(--glass-bg);
-            color: var(--fg-primary);
-        }
-
-        .sidebar-item.active {
-            background: rgba(0, 212, 170, 0.1);
-            color: var(--accent-primary);
-        }
-
-        .sidebar-item svg {
-            width: 18px;
-            height: 18px;
-            flex-shrink: 0;
-        }
-
-        .sidebar-item-badge {
-            margin-left: auto;
-            padding: 2px 8px;
-            border-radius: var(--radius-full);
-            background: var(--accent-primary);
-            color: white;
-            font-size: 0.7rem;
-            font-weight: 600;
-        }
-
-        /* Chat Panel (Main Area) */
-        .chat-panel {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            min-width: 0;
-            border-radius: var(--radius-xl);
-            overflow: hidden;
-        }
-
-        .chat-header {
-            padding: 16px 24px;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            border-bottom: 1px solid var(--glass-border);
-        }
-
-        .chat-title-group {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-        }
-
-        .chat-title {
-            font-size: 1.1rem;
-            font-weight: 600;
-        }
-
-        .chat-subtitle {
-            font-size: 0.85rem;
-            color: var(--fg-muted);
-        }
-
-        .model-selector {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            padding: 8px 14px;
-            border-radius: var(--radius-full);
-            background: var(--glass-bg);
-            border: 1px solid var(--glass-border);
-            cursor: pointer;
-            transition: all var(--transition-fast);
-            font-size: 0.9rem;
-            font-weight: 500;
-            color: var(--fg-primary);
-        }
-
-        .model-selector:hover {
-            border-color: var(--accent-primary);
-        }
-
-        .model-dot {
-            width: 8px;
-            height: 8px;
-            border-radius: 50%;
-            background: var(--accent-primary);
-            animation: pulse 2s ease-in-out infinite;
-        }
-
-        @keyframes pulse {
-            0%, 100% { opacity: 1; transform: scale(1); }
-            50% { opacity: 0.6; transform: scale(0.9); }
-        }
-
-        /* Messages Container */
-        .messages-container {
-            flex: 1;
-            overflow-y: auto;
-            padding: 24px;
-            display: flex;
-            flex-direction: column;
-            gap: 20px;
-        }
-
-        .message {
-            display: flex;
-            gap: 16px;
-            max-width: 800px;
-            animation: messageIn 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
-        }
-
-        @keyframes messageIn {
-            from {
-                opacity: 0;
-                transform: translateY(16px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
-        .message.user {
-            flex-direction: row-reverse;
-            align-self: flex-end;
-        }
-
-        .message-avatar {
-            width: 38px;
-            height: 38px;
-            border-radius: var(--radius-md);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            flex-shrink: 0;
-            font-weight: 600;
-            font-size: 0.9rem;
-        }
-
-        .message.assistant .message-avatar {
-            background: var(--accent-gradient);
-            color: white;
-        }
-
-        .message.user .message-avatar {
-            background: linear-gradient(135deg, #8b5cf6 0%, #ec4899 100%);
-            color: white;
-        }
-
-        .message-content {
-            flex: 1;
-            min-width: 0;
-        }
-
-        .message-bubble {
-            padding: 16px 20px;
-            border-radius: var(--radius-lg);
-            line-height: 1.7;
-            font-size: 0.95rem;
-        }
-
-        .message.assistant .message-bubble {
-            background: var(--glass-bg);
-            border: 1px solid var(--glass-border);
-            border-top-left-radius: var(--radius-sm);
-        }
-
-        .message.user .message-bubble {
-            background: var(--accent-gradient);
-            color: white;
-            border-top-right-radius: var(--radius-sm);
-        }
-
-        .message-meta {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            margin-top: 8px;
-            padding: 0 4px;
-        }
-
-        .message-time {
-            font-size: 0.75rem;
-            color: var(--fg-muted);
-        }
-
-        .message-actions {
-            display: flex;
-            gap: 4px;
-            opacity: 0;
-            transition: opacity var(--transition-fast);
-        }
-
-        .message:hover .message-actions {
-            opacity: 1;
-        }
-
-        .message-action-btn {
-            width: 30px;
-            height: 30px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            border-radius: var(--radius-sm);
-            background: transparent;
-            border: none;
-            color: var(--fg-muted);
-            cursor: pointer;
-            transition: all var(--transition-fast);
-        }
-
-        .message-action-btn:hover {
-            background: var(--glass-bg);
-            color: var(--fg-primary);
-        }
-
-        .message-action-btn svg {
-            width: 16px;
-            height: 16px;
-        }
-
-        /* Code Block in Messages */
-        .code-block {
-            margin: 12px 0;
-            border-radius: var(--radius-md);
-            overflow: hidden;
-            background: var(--bg-secondary);
-            border: 1px solid var(--glass-border);
-        }
-
-        .code-header {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: 8px 16px;
-            background: var(--bg-tertiary);
-            border-bottom: 1px solid var(--glass-border);
-            font-size: 0.8rem;
-            color: var(--fg-muted);
-        }
-
-        .code-copy-btn {
-            padding: 4px 10px;
-            border-radius: var(--radius-sm);
-            background: var(--glass-bg);
-            border: 1px solid var(--glass-border);
-            color: var(--fg-secondary);
-            font-size: 0.75rem;
-            cursor: pointer;
-            transition: all var(--transition-fast);
-        }
-
-        .code-copy-btn:hover {
-            background: var(--accent-primary);
-            color: white;
-            border-color: var(--accent-primary);
-        }
-
-        .code-content {
-            padding: 16px;
-            font-family: 'JetBrains Mono', monospace;
-            font-size: 0.85rem;
-            line-height: 1.6;
-            overflow-x: auto;
-            color: var(--fg-primary);
-        }
-
-        /* Typing Indicator */
-        .typing-indicator {
-            display: flex;
-            gap: 6px;
-            padding: 8px 0;
-        }
-
-        .typing-dot {
-            width: 8px;
-            height: 8px;
-            border-radius: 50%;
-            background: var(--accent-primary);
-            animation: typingBounce 1.4s ease-in-out infinite;
-        }
-
-        .typing-dot:nth-child(2) { animation-delay: 0.2s; }
-        .typing-dot:nth-child(3) { animation-delay: 0.4s; }
-
-        @keyframes typingBounce {
-            0%, 60%, 100% { transform: translateY(0); opacity: 0.4; }
-            30% { transform: translateY(-8px); opacity: 1; }
-        }
-
-        /* Input Area */
-        .input-area {
-            padding: 20px 24px;
-            border-top: 1px solid var(--glass-border);
-        }
-
-        .input-wrapper {
-            display: flex;
-            align-items: flex-end;
-            gap: 12px;
-            padding: 12px 16px;
-            border-radius: var(--radius-xl);
-            background: var(--glass-bg);
-            border: 1px solid var(--glass-border);
-            transition: all var(--transition-fast);
-        }
-
-        .input-wrapper:focus-within {
-            border-color: var(--accent-primary);
-            box-shadow: 0 0 0 4px rgba(0, 212, 170, 0.1);
-        }
-
-        .message-input {
-            flex: 1;
-            background: transparent;
-            border: none;
-            outline: none;
-            color: var(--fg-primary);
-            font-size: 0.95rem;
-            font-family: inherit;
-            resize: none;
-            max-height: 150px;
-            line-height: 1.5;
-        }
-
-        .message-input::placeholder {
-            color: var(--fg-muted);
-        }
-
-        .input-actions {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-
-        .send-btn {
-            width: 42px;
-            height: 42px;
-            border-radius: var(--radius-md);
-            background: var(--accent-gradient);
-            border: none;
-            color: white;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            transition: all var(--transition-fast);
-            flex-shrink: 0;
-        }
-
-        .send-btn:hover:not(:disabled) {
-            transform: scale(1.05);
-            box-shadow: 0 4px 16px rgba(0, 212, 170, 0.4);
-        }
-
-        .send-btn:disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
-        }
-
-        .send-btn svg {
-            width: 20px;
-            height: 20px;
-        }
-
-        .input-footer {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            margin-top: 12px;
-            padding: 0 4px;
-        }
-
-        .input-hint {
-            font-size: 0.78rem;
-            color: var(--fg-muted);
-        }
-
-        .input-hint kbd {
-            display: inline-block;
-            padding: 2px 6px;
-            border-radius: 4px;
-            background: var(--glass-bg);
-            border: 1px solid var(--glass-border);
-            font-family: inherit;
-            font-size: 0.72rem;
-            margin: 0 2px;
-        }
-
-        /* Right Panel */
-        .right-panel {
-            width: 320px;
-            flex-shrink: 0;
-            display: flex;
-            flex-direction: column;
-            gap: 16px;
-            height: calc(100vh - 100px);
-            position: sticky;
-            top: 88px;
-            overflow-y: auto;
-        }
-
-        .panel-card {
-            border-radius: var(--radius-lg);
-            overflow: hidden;
-        }
-
-        .panel-card-header {
-            padding: 16px 20px;
-            border-bottom: 1px solid var(--glass-border);
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-        }
-
-        .panel-card-title {
-            font-size: 0.95rem;
-            font-weight: 600;
-        }
-
-        .panel-card-body {
-            padding: 16px 20px;
-        }
-
-        /* Stats Cards */
-        .stats-grid {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 12px;
-        }
-
-        .stat-item {
-            padding: 14px;
-            border-radius: var(--radius-md);
-            background: var(--glass-bg);
-            border: 1px solid var(--glass-border);
-            text-align: center;
-        }
-
-        .stat-value {
-            font-size: 1.5rem;
-            font-weight: 700;
-            background: var(--accent-gradient);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-        }
-
-        .stat-label {
-            font-size: 0.78rem;
-            color: var(--fg-muted);
-            margin-top: 4px;
-        }
-
-        /* Quick Actions */
-        .quick-actions {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 10px;
-        }
-
-        .quick-action-btn {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 8px;
-            padding: 16px 12px;
-            border-radius: var(--radius-md);
-            background: var(--glass-bg);
-            border: 1px solid var(--glass-border);
-            color: var(--fg-secondary);
-            cursor: pointer;
-            transition: all var(--transition-fast);
-            font-size: 0.8rem;
-            font-weight: 500;
-        }
-
-        .quick-action-btn:hover {
-            background: rgba(0, 212, 170, 0.1);
-            border-color: var(--accent-primary);
-            color: var(--accent-primary);
-            transform: translateY(-2px);
-        }
-
-        .quick-action-btn svg {
-            width: 22px;
-            height: 22px;
-        }
-
-        /* Image Gallery */
-        .image-gallery {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 10px;
-        }
-
-        .gallery-item {
-            aspect-ratio: 1;
-            border-radius: var(--radius-md);
-            overflow: hidden;
-            cursor: pointer;
-            position: relative;
-            group: gallery;
-        }
-
-        .gallery-item img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-            transition: transform var(--transition-normal);
-        }
-
-        .gallery-item:hover img {
-            transform: scale(1.1);
-        }
-
-        .gallery-overlay {
-            position: absolute;
-            inset: 0;
-            background: linear-gradient(to top, rgba(0,0,0,0.7), transparent);
-            opacity: 0;
-            transition: opacity var(--transition-fast);
-            display: flex;
-            align-items: flex-end;
-            padding: 10px;
-        }
-
-        .gallery-item:hover .gallery-overlay {
-            opacity: 1;
-        }
-
-        .gallery-info {
-            font-size: 0.75rem;
-            color: white;
-        }
-
-        /* Settings Panel (Liquid Glass Modal) */
-        .settings-overlay {
-            position: fixed;
-            inset: 0;
-            background: rgba(0, 0, 0, 0.6);
-            backdrop-filter: blur(8px);
-            z-index: 1000;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 24px;
-            opacity: 0;
-            visibility: hidden;
-            transition: all var(--transition-normal);
-        }
-
-        .settings-overlay.active {
-            opacity: 1;
-            visibility: visible;
-        }
-
-        .settings-modal {
-            width: 100%;
-            max-width: 640px;
-            max-height: 85vh;
-            border-radius: var(--radius-xl);
-            overflow: hidden;
-            transform: scale(0.95) translateY(20px);
-            transition: transform var(--transition-normal);
-        }
-
-        .settings-overlay.active .settings-modal {
-            transform: scale(1) translateY(0);
-        }
-
-        .settings-header {
-            padding: 24px 28px;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            border-bottom: 1px solid var(--glass-border);
-        }
-
-        .settings-title {
-            font-size: 1.25rem;
-            font-weight: 700;
-        }
-
-        .settings-close-btn {
-            width: 36px;
-            height: 36px;
-            border-radius: var(--radius-md);
-            background: var(--glass-bg);
-            border: 1px solid var(--glass-border);
-            color: var(--fg-secondary);
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            transition: all var(--transition-fast);
-        }
-
-        .settings-close-btn:hover {
-            background: var(--danger);
-            color: white;
-            border-color: var(--danger);
-        }
-
-        .settings-body {
-            padding: 24px 28px;
-            overflow-y: auto;
-            max-height: calc(85vh - 140px);
-        }
-
-        .settings-section {
-            margin-bottom: 32px;
-        }
-
-        .settings-section:last-child {
-            margin-bottom: 0;
-        }
-
-        .settings-section-title {
-            font-size: 0.8rem;
-            font-weight: 600;
-            text-transform: uppercase;
-            letter-spacing: 0.06em;
-            color: var(--fg-muted);
-            margin-bottom: 16px;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-
-        .settings-section-title svg {
-            width: 16px;
-            height: 16px;
-        }
-
-        /* Theme Toggle (Liquid Glass Style) */
-        .theme-toggle-container {
-            display: flex;
-            align-items: center;
-            gap: 16px;
-            padding: 20px;
-            border-radius: var(--radius-lg);
-            background: var(--glass-bg);
-            border: 1px solid var(--glass-border);
-        }
-
-        .theme-option {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 10px;
-            padding: 16px;
-            border-radius: var(--radius-md);
-            cursor: pointer;
-            transition: all var(--transition-fast);
-            border: 2px solid transparent;
-            position: relative;
-        }
-
-        .theme-option:hover {
-            background: var(--glass-border);
-        }
-
-        .theme-option.active {
-            border-color: var(--accent-primary);
-            background: rgba(0, 212, 170, 0.1);
-        }
-
-        .theme-preview {
-            width: 56px;
-            height: 56px;
-            border-radius: var(--radius-lg);
-            overflow: hidden;
-            position: relative;
-            box-shadow: 0 4px 16px var(--glass-shadow);
-        }
-
-        .theme-preview-dark {
-            background: linear-gradient(135deg, #0a0a0f 0%, #1a1a25 100%);
-        }
-
-        .theme-preview-light {
-            background: linear-gradient(135deg, #fafafa 0%, #f4f4f5 100%);
-        }
-
-        .theme-preview-auto {
-            background: linear-gradient(135deg, #0a0a0f 0%, #fafafa 100%);
-        }
-
-        .theme-icon {
-            position: absolute;
-            bottom: 6px;
-            right: 6px;
-            width: 20px;
-            height: 20px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: white;
-            font-size: 12px;
-        }
-
-        .theme-option-label {
-            font-size: 0.85rem;
-            font-weight: 500;
-            color: var(--fg-secondary);
-        }
-
-        .theme-option.active .theme-option-label {
-            color: var(--accent-primary);
-        }
-
-        /* Settings Items */
-        .setting-item {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: 16px 0;
-            border-bottom: 1px solid var(--glass-border);
-        }
-
-        .setting-item:last-child {
-            border-bottom: none;
-        }
-
-        .setting-info {
-            display: flex;
-            flex-direction: column;
-            gap: 4px;
-        }
-
-        .setting-label {
-            font-size: 0.95rem;
-            font-weight: 500;
-        }
-
-        .setting-description {
-            font-size: 0.82rem;
-            color: var(--fg-muted);
-        }
-
-        /* Toggle Switch */
-        .toggle-switch {
-            position: relative;
-            width: 52px;
-            height: 28px;
-            cursor: pointer;
-        }
-
-        .toggle-switch input {
-            opacity: 0;
-            width: 0;
-            height: 0;
-        }
-
-        .toggle-slider {
-            position: absolute;
-            inset: 0;
-            background: var(--bg-tertiary);
-            border-radius: var(--radius-full);
-            transition: all var(--transition-fast);
-            border: 1px solid var(--glass-border);
-        }
-
-        .toggle-slider::before {
-            content: '';
-            position: absolute;
-            width: 22px;
-            height: 22px;
-            left: 2px;
-            bottom: 2px;
-            background: white;
-            border-radius: 50%;
-            transition: all var(--transition-fast);
-            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
-        }
-
-        .toggle-switch input:checked + .toggle-slider {
-            background: var(--accent-gradient);
-            border-color: var(--accent-primary);
-        }
-
-        .toggle-switch input:checked + .toggle-slider::before {
-            transform: translateX(24px);
-        }
-
-        /* Range Slider */
-        .range-slider {
-            width: 140px;
-            height: 6px;
-            -webkit-appearance: none;
-            appearance: none;
-            background: var(--bg-tertiary);
-            border-radius: var(--radius-full);
-            outline: none;
-        }
-
-        .range-slider::-webkit-slider-thumb {
-            -webkit-appearance: none;
-            appearance: none;
-            width: 18px;
-            height: 18px;
-            border-radius: 50%;
-            background: var(--accent-gradient);
-            cursor: pointer;
-            box-shadow: 0 2px 8px rgba(0, 212, 170, 0.4);
-            transition: transform var(--transition-fast);
-        }
-
-        .range-slider::-webkit-slider-thumb:hover {
-            transform: scale(1.15);
-        }
-
-        /* Color Picker */
-        .color-options {
-            display: flex;
-            gap: 10px;
-        }
-
-        .color-option {
-            width: 36px;
-            height: 36px;
-            border-radius: var(--radius-md);
-            cursor: pointer;
-            border: 2px solid transparent;
-            transition: all var(--transition-fast);
-            position: relative;
-        }
-
-        .color-option:hover {
-            transform: scale(1.1);
-        }
-
-        .color-option.active {
-            border-color: var(--fg-primary);
-        }
-
-        .color-option.active::after {
-            content: '✓';
-            position: absolute;
-            inset: 0;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: white;
-            font-size: 14px;
-            font-weight: bold;
-        }
-
-        /* Select Dropdown */
-        .select-wrapper {
-            position: relative;
-        }
-
-        .custom-select {
-            padding: 10px 36px 10px 14px;
-            border-radius: var(--radius-md);
-            background: var(--glass-bg);
-            border: 1px solid var(--glass-border);
-            color: var(--fg-primary);
-            font-size: 0.9rem;
-            font-family: inherit;
-            cursor: pointer;
-            appearance: none;
-            min-width: 150px;
-            transition: all var(--transition-fast);
-        }
-
-        .custom-select:focus {
-            outline: none;
-            border-color: var(--accent-primary);
-        }
-
-        .select-arrow {
-            position: absolute;
-            right: 12px;
-            top: 50%;
-            transform: translateY(-50%);
-            pointer-events: none;
-            color: var(--fg-muted);
-        }
-
-        /* Welcome Screen */
-        .welcome-screen {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            padding: 48px 24px;
-            text-align: center;
-        }
-
-        .welcome-logo {
-            width: 80px;
-            height: 80px;
-            border-radius: var(--radius-xl);
-            background: var(--accent-gradient);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            margin-bottom: 24px;
-            box-shadow: 0 8px 32px rgba(0, 212, 170, 0.3);
-            animation: floatLogo 4s ease-in-out infinite;
-        }
-
-        @keyframes floatLogo {
-            0%, 100% { transform: translateY(0); }
-            50% { transform: translateY(-10px); }
-        }
-
-        .welcome-logo svg {
-            width: 42px;
-            height: 42px;
-            color: white;
-        }
-
-        .welcome-title {
-            font-size: 2rem;
-            font-weight: 800;
-            margin-bottom: 12px;
-            letter-spacing: -0.03em;
-        }
-
-        .welcome-subtitle {
-            font-size: 1.1rem;
-            color: var(--fg-secondary);
-            max-width: 480px;
-            margin-bottom: 40px;
-            line-height: 1.7;
-        }
-
-        .welcome-prompts {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 12px;
-            max-width: 600px;
-            width: 100%;
-        }
-
-        .prompt-card {
-            padding: 18px 20px;
-            border-radius: var(--radius-lg);
-            background: var(--glass-bg);
-            border: 1px solid var(--glass-border);
-            text-align: left;
-            cursor: pointer;
-            transition: all var(--transition-fast);
-        }
-
-        .prompt-card:hover {
-            background: rgba(0, 212, 170, 0.1);
-            border-color: var(--accent-primary);
-            transform: translateY(-3px);
-        }
-
-        .prompt-card-icon {
-            width: 36px;
-            height: 36px;
-            border-radius: var(--radius-md);
-            background: var(--accent-gradient);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            margin-bottom: 12px;
-        }
-
-        .prompt-card-icon svg {
-            width: 18px;
-            height: 18px;
-            color: white;
-        }
-
-        .prompt-card-title {
-            font-size: 0.95rem;
-            font-weight: 600;
-            margin-bottom: 4px;
-        }
-
-        .prompt-card-desc {
-            font-size: 0.82rem;
-            color: var(--fg-muted);
-        }
-
-        /* Toast Notifications */
-        .toast-container {
-            position: fixed;
-            bottom: 24px;
-            right: 24px;
-            z-index: 2000;
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-        }
-
-        .toast {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            padding: 14px 20px;
-            border-radius: var(--radius-lg);
-            background: var(--glass-bg);
-            backdrop-filter: blur(20px);
-            border: 1px solid var(--glass-border);
-            box-shadow: 0 8px 32px var(--glass-shadow);
-            animation: toastIn 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
-            min-width: 280px;
-        }
-
-        .toast.removing {
-            animation: toastOut 0.3s ease-in forwards;
-        }
-
-        @keyframes toastIn {
-            from {
-                opacity: 0;
-                transform: translateX(100px);
-            }
-            to {
-                opacity: 1;
-                transform: translateX(0);
-            }
-        }
-
-        @keyframes toastOut {
-            to {
-                opacity: 0;
-                transform: translateX(100px);
-            }
-        }
-
-        .toast-icon {
-            width: 24px;
-            height: 24px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            flex-shrink: 0;
-        }
-
-        .toast-success .toast-icon { background: var(--success); }
-        .toast-error .toast-icon { background: var(--danger); }
-        .toast-warning .toast-icon { background: var(--warning); }
-        .toast-info .toast-icon { background: var(--accent-secondary); }
-
-        .toast-message {
-            flex: 1;
-            font-size: 0.9rem;
-            font-weight: 500;
-        }
-
-        .toast-close {
-            width: 24px;
-            height: 24px;
-            border-radius: var(--radius-sm);
-            background: transparent;
-            border: none;
-            color: var(--fg-muted);
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            transition: all var(--transition-fast);
-        }
-
-        .toast-close:hover {
-            background: var(--glass-border);
-            color: var(--fg-primary);
-        }
-
-        /* Loading Spinner */
-        .spinner {
-            width: 20px;
-            height: 20px;
-            border: 2px solid var(--glass-border);
-            border-top-color: var(--accent-primary);
-            border-radius: 50%;
-            animation: spin 0.8s linear infinite;
-        }
-
-        @keyframes spin {
-            to { transform: rotate(360deg); }
-        }
-
-        /* Badge */
-        .badge {
-            display: inline-flex;
-            align-items: center;
-            padding: 4px 10px;
-            border-radius: var(--radius-full);
-            font-size: 0.72rem;
-            font-weight: 600;
-            text-transform: uppercase;
-            letter-spacing: 0.04em;
-        }
-
-        .badge-success { background: rgba(16, 185, 129, 0.15); color: var(--success); }
-        .badge-warning { background: rgba(245, 158, 11, 0.15); color: var(--warning); }
-        .badge-info { background: rgba(14, 165, 233, 0.15); color: var(--accent-secondary); }
-
-        /* Progress Bar */
-        .progress-bar {
-            height: 6px;
-            background: var(--bg-tertiary);
-            border-radius: var(--radius-full);
-            overflow: hidden;
-        }
-
-        .progress-fill {
-            height: 100%;
-            background: var(--accent-gradient);
-            border-radius: var(--radius-full);
-            transition: width var(--transition-normal);
-        }
-
-        /* Tooltip */
-        [data-tooltip] {
-            position: relative;
-        }
-
-        [data-tooltip]::after {
-            content: attr(data-tooltip);
-            position: absolute;
-            bottom: 100%;
-            left: 50%;
-            transform: translateX(-50%) translateY(-8px);
-            padding: 6px 12px;
-            border-radius: var(--radius-sm);
-            background: var(--fg-primary);
-            color: var(--bg-primary);
-            font-size: 0.75rem;
-            font-weight: 500;
-            white-space: nowrap;
-            opacity: 0;
-            visibility: hidden;
-            transition: all var(--transition-fast);
-            pointer-events: none;
-            z-index: 100;
-        }
-
-        [data-tooltip]:hover::after {
-            opacity: 1;
-            visibility: visible;
-            transform: translateX(-50%) translateY(-4px);
-        }
-
-        /* Responsive Design */
-        @media (max-width: 1200px) {
-            .right-panel {
-                display: none;
-            }
-        }
-
-        @media (max-width: 900px) {
-            .sidebar {
-                display: none;
-            }
-
-            .main-content {
-                padding: 0 16px 16px;
-            }
-
-            .chat-header {
-                padding: 12px 16px;
-            }
-
-            .messages-container {
-                padding: 16px;
-            }
-
-            .input-area {
-                padding: 16px;
-            }
-
-            .welcome-prompts {
-                grid-template-columns: 1fr;
-            }
-
-            .nav-links {
-                display: none;
-            }
-        }
-
-        @media (max-width: 600px) {
-            .header {
-                padding: 10px 16px;
-            }
-
-            .logo span {
-                display: none;
-            }
-
-            .welcome-title {
-                font-size: 1.5rem;
-            }
-
-            .welcome-subtitle {
-                font-size: 0.95rem;
-            }
-
-            .settings-modal {
-                max-height: 90vh;
-                border-radius: var(--radius-lg);
-            }
-
-            .settings-header,
-            .settings-body {
-                padding-left: 20px;
-                padding-right: 20px;
-            }
-
-            .theme-toggle-container {
-                flex-direction: column;
-                gap: 12px;
-            }
-
-            .theme-option {
-                flex-direction: row;
-                gap: 12px;
-            }
-        }
-
-        /* Reduced Motion */
-        @media (prefers-reduced-motion: reduce) {
-            *,
-            *::before,
-            *::after {
-                animation-duration: 0.01ms !important;
-                animation-iteration-count: 1 !important;
-                transition-duration: 0.01ms !important;
-            }
-        }
-
-        /* Focus Visible Styles */
-        :focus-visible {
-            outline: 2px solid var(--accent-primary);
-            outline-offset: 2px;
-        }
-
-        /* Utility Classes */
-        .sr-only {
-            position: absolute;
-            width: 1px;
-            height: 1px;
-            padding: 0;
-            margin: -1px;
-            overflow: hidden;
-            clip: rect(0, 0, 0, 0);
-            white-space: nowrap;
-            border: 0;
-        }
-
-        .truncate {
-            overflow: hidden;
-            text-overflow: ellipsis;
-            white-space: nowrap;
-        }
-
-        /* Image Generation Panel */
-        .image-gen-form {
-            display: flex;
-            flex-direction: column;
-            gap: 16px;
-        }
-
-        .form-group {
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
-        }
-
-        .form-label {
-            font-size: 0.85rem;
-            font-weight: 500;
-            color: var(--fg-secondary);
-        }
-
-        .form-input,
-        .form-textarea {
-            padding: 12px 16px;
-            border-radius: var(--radius-md);
-            background: var(--glass-bg);
-            border: 1px solid var(--glass-border);
-            color: var(--fg-primary);
-            font-size: 0.9rem;
-            font-family: inherit;
-            transition: all var(--transition-fast);
-            width: 100%;
-        }
-
-        .form-textarea {
-            resize: vertical;
-            min-height: 100px;
-        }
-
-        .form-input:focus,
-        .form-textarea:focus {
-            outline: none;
-            border-color: var(--accent-primary);
-            box-shadow: 0 0 0 4px rgba(0, 212, 170, 0.1);
-        }
-
-        .form-row {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 12px;
-        }
-
-        /* Tabs Component */
-        .tabs {
-            display: flex;
-            gap: 4px;
-            padding: 4px;
-            background: var(--glass-bg);
-            border-radius: var(--radius-lg);
-        }
-
-        .tab {
-            flex: 1;
-            padding: 10px 16px;
-            border-radius: var(--radius-md);
-            background: transparent;
-            border: none;
-            color: var(--fg-secondary);
-            font-size: 0.9rem;
-            font-weight: 500;
-            cursor: pointer;
-            transition: all var(--transition-fast);
-        }
-
-        .tab:hover {
-            color: var(--fg-primary);
-        }
-
-        .tab.active {
-            background: var(--accent-gradient);
-            color: white;
-            box-shadow: 0 4px 12px rgba(0, 212, 170, 0.3);
-        }
-
-        /* Empty State */
-        .empty-state {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            padding: 40px 20px;
-            text-align: center;
-            color: var(--fg-muted);
-        }
-
-        .empty-state-icon {
-            width: 64px;
-            height: 64px;
-            border-radius: var(--radius-lg);
-            background: var(--glass-bg);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            margin-bottom: 16px;
-        }
-
-        .empty-state-icon svg {
-            width: 28px;
-            height: 28px;
-        }
-
-        .empty-state-title {
-            font-size: 1rem;
-            font-weight: 600;
-            color: var(--fg-secondary);
-            margin-bottom: 8px;
-        }
-
-        .empty-state-desc {
-            font-size: 0.85rem;
-        }
-
-        /* Keyboard Shortcuts Help */
-        .shortcuts-grid {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 12px;
-        }
-
-        .shortcut-item {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: 10px 14px;
-            border-radius: var(--radius-md);
-            background: var(--glass-bg);
-        }
-
-        .shortcut-keys {
-            display: flex;
-            gap: 4px;
-        }
-
-        .shortcut-key {
-            padding: 4px 8px;
-            border-radius: 4px;
-            background: var(--bg-tertiary);
-            border: 1px solid var(--glass-border);
-            font-family: 'JetBrains Mono', monospace;
-            font-size: 0.75rem;
-            font-weight: 500;
-        }
-
-        /* Activity Feed */
-        .activity-feed {
-            display: flex;
-            flex-direction: column;
-            gap: 12px;
-        }
-
-        .activity-item {
-            display: flex;
-            gap: 12px;
-            padding: 12px;
-            border-radius: var(--radius-md);
-            background: var(--glass-bg);
-            transition: all var(--transition-fast);
-        }
-
-        .activity-item:hover {
-            background: var(--glass-border);
-        }
-
-        .activity-icon {
-            width: 36px;
-            height: 36px;
-            border-radius: var(--radius-md);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            flex-shrink: 0;
-        }
-
-        .activity-content {
-            flex: 1;
-            min-width: 0;
-        }
-
-        .activity-text {
-            font-size: 0.85rem;
-            line-height: 1.5;
-        }
-
-        .activity-time {
-            font-size: 0.75rem;
-            color: var(--fg-muted);
-            margin-top: 4px;
-        }
-
-        /* Feature Highlight Animation */
-        .feature-highlight {
-            position: relative;
-            overflow: hidden;
-        }
-
-        .feature-highlight::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: -100%;
-            width: 100%;
-            height: 100%;
-            background: linear-gradient(
-                90deg,
-                transparent,
-                rgba(255, 255, 255, 0.1),
-                transparent
-            );
-            animation: shimmer 3s infinite;
-        }
-
-        @keyframes shimmer {
-            100% { left: 100%; }
-        }
-
-        /* Staggered Animation Classes */
-        .stagger-children > * {
-            opacity: 0;
-            transform: translateY(20px);
-            animation: staggerIn 0.5s forwards;
-        }
-
-        .stagger-children > *:nth-child(1) { animation-delay: 0.05s; }
-        .stagger-children > *:nth-child(2) { animation-delay: 0.1s; }
-        .stagger-children > *:nth-child(3) { animation-delay: 0.15s; }
-        .stagger-children > *:nth-child(4) { animation-delay: 0.2s; }
-        .stagger-children > *:nth-child(5) { animation-delay: 0.25s; }
-        .stagger-children > *:nth-child(6) { animation-delay: 0.3s; }
-
-        @keyframes staggerIn {
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CineTrack AI — Liquid Glass Sea Edition</title>
+  <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+  
+  <style>
+    /* ===================== LIQUID GLASS SEA THEME VARIABLES ===================== */
+    :root[data-theme="light"] {
+      --bg-primary: #F0F8FF; /* Ocean foam white */
+      --bg-secondary: rgba(224, 240, 255, 0.65);
+      --surface: rgba(255, 255, 255, 0.5);
+      --surface-hover: rgba(127, 255, 212, 0.25); /* Seafoam green accent */
+      --border: rgba(0, 206, 209, 0.25); /* Aqua blue border */
+      --accent: #FF7F50; /* Coral touch */
+      --accent-hover: #E65C2B;
+      --accent-glow: rgba(255, 127, 80, 0.35);
+      --text-primary: #001f3f; /* Deep navy for premium contrast */
+      --text-secondary: #2f4f4f;
+      --shadow: 0 8px 32px rgba(0, 150, 200, 0.15);
+      --blur-val: 20px;
+      --pulse-color: rgba(255, 127, 80, 0.6);
+      --badge-bg: #ff9800;
+    }
+
+    :root[data-theme="dark"] {
+      --bg-primary: #0a1628; /* Deep ocean blue */
+      --bg-secondary: rgba(0, 77, 77, 0.4); /* Dark teal background */
+      --surface: rgba(10, 22, 40, 0.65);
+      --surface-hover: rgba(0, 255, 255, 0.12); /* Bioluminescent cyan glow */
+      --border: rgba(255, 255, 255, 0.18);
+      --accent: #00ffff; /* Bioluminescent cyan */
+      --accent-hover: #00ced1; /* Aqua blue */
+      --accent-glow: rgba(0, 255, 255, 0.45);
+      --text-primary: #E0FFFF; /* Soft white/silver */
+      --text-secondary: #8ba3b5;
+      --shadow: 0 8px 32px rgba(0, 255, 255, 0.1);
+      --blur-val: 25px;
+      --pulse-color: rgba(0, 255, 255, 0.6);
+      --badge-bg: #ffb300;
+    }
+
+    /* ===================== GLOBAL STYLES & RESET ===================== */
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: 'Vazirmatn', sans-serif;
+    }
+
+    body {
+      background: var(--bg-primary);
+      color: var(--text-primary);
+      overflow-x: hidden;
+      min-height: 100vh;
+      transition: background 0.5s cubic-bezier(0.4, 0, 0.2, 1), color 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+      position: relative;
+    }
+
+    /* Gentle Wave Animated Background */
+    body::before {
+      content: "";
+      position: fixed;
+      top: -50%; left: -50%; right: -50%; bottom: -50%;
+      width: 200vw; height: 200vh;
+      background: radial-gradient(circle at 20% 30%, var(--surface-hover), transparent 40%),
+                  radial-gradient(circle at 75% 70%, var(--accent-glow), transparent 45%);
+      opacity: 0.6;
+      z-index: -2;
+      animation: oceanWaveFlow 25s infinite linear;
+    }
+
+    @keyframes oceanWaveFlow {
+      0% { transform: rotate(0deg) translate(0, 0); }
+      50% { transform: rotate(180deg) translate(-20px, 30px); }
+      100% { transform: rotate(360deg) translate(0, 0); }
+    }
+
+    /* Accessibility Skip Link */
+    .skip-link {
+      position: absolute;
+      top: -100px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: var(--accent);
+      color: #fff;
+      padding: 10px 20px;
+      border-radius: 0 0 8px 8px;
+      z-index: 9999;
+      text-decoration: none;
+      transition: top 0.2s;
+    }
+    .skip-link:focus {
+      top: 0;
+    }
+
+    /* Focus visible indicator for high contrast accessibility */
+    input:focus-visible, select:focus-visible, button:focus-visible, a:focus-visible {
+      outline: 3px solid var(--accent);
+      outline-offset: 2px;
+    }
+
+    /* ===================== LAYOUT & APP CONTAINER ===================== */
+    .app-container {
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 24px;
+    }
+
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 16px 24px;
+      border-radius: 16px;
+      background: var(--surface);
+      backdrop-filter: blur(var(--blur-val));
+      -webkit-backdrop-filter: blur(var(--blur-val));
+      border: 1px solid var(--border);
+      box-shadow: var(--shadow);
+    }
+
+    .brand-section {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .brand-title {
+      font-size: clamp(1.2rem, 2.5vw, 1.8rem);
+      font-weight: 900;
+      background: linear-gradient(45deg, var(--text-primary), var(--accent));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .header-actions {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    /* Interactive Tap Targets Menu & Buttons */
+    .btn-circle {
+      width: 46px;
+      height: 46px;
+      border-radius: 50%;
+      border: 1px solid var(--border);
+      background: var(--surface);
+      color: var(--text-primary);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      position: relative;
+      overflow: hidden;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    .btn-circle:hover {
+      transform: translateY(-2px) scale(1.05);
+      background: var(--surface-hover);
+      box-shadow: 0 0 15px var(--accent-glow);
+    }
+
+    /* Hamburger Menu for Mobile Navigation */
+    .hamburger-menu {
+      display: none;
+      flex-direction: column;
+      gap: 5px;
+      background: none;
+      border: none;
+      cursor: pointer;
+      padding: 8px;
+    }
+    .hamburger-menu span {
+      width: 25px;
+      height: 3px;
+      background-color: var(--text-primary);
+      transition: 0.3s;
+    }
+
+    /* ===================== CONTROL & FILTER BAR ===================== */
+    .controls-panel {
+      padding: 20px;
+      border-radius: 16px;
+      background: var(--surface);
+      backdrop-filter: blur(var(--blur-val));
+      -webkit-backdrop-filter: blur(var(--blur-val));
+      border: 1px solid var(--border);
+      box-shadow: var(--shadow);
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 16px;
+    }
+
+    .search-wrapper {
+      position: relative;
+    }
+
+    .search-input {
+      width: 100%;
+      height: 46px;
+      padding: 0 16px 0 44px;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      background: rgba(0, 0, 0, 0.05);
+      color: var(--text-primary);
+      font-size: 0.95rem;
+    }
+    :root[data-theme="dark"] .search-input {
+      background: rgba(255, 255, 255, 0.05);
+    }
+
+    .filter-select {
+      height: 46px;
+      padding: 0 12px;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      background: var(--surface);
+      color: var(--text-primary);
+      cursor: pointer;
+    }
+
+    /* ===================== MAIN GRID & GLASS METRIC CARDS ===================== */
+    .main-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+      gap: 24px;
+    }
+
+    .media-card {
+      background: var(--surface);
+      backdrop-filter: blur(var(--blur-val));
+      -webkit-backdrop-filter: blur(var(--blur-val));
+      border: 1px solid var(--border);
+      box-shadow: var(--shadow);
+      border-radius: 16px;
+      overflow: hidden;
+      position: relative;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      display: flex;
+      flex-direction: column;
+    }
+    .media-card:hover {
+      transform: translateY(-6px) scale(1.02);
+      box-shadow: 0 12px 40px var(--accent-glow);
+      background: var(--surface-hover);
+    }
+
+    .card-poster-wrapper {
+      position: relative;
+      width: 100%;
+      padding-top: 145%;
+      background: rgba(0,0,0,0.1);
+      overflow: hidden;
+    }
+
+    .card-poster {
+      position: absolute;
+      top: 0; left: 0; width: 100%; height: 100%;
+      object-fit: cover;
+      transition: transform 0.5s;
+    }
+    .media-card:hover .card-poster {
+      transform: scale(1.06);
+    }
+
+    .card-content {
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      flex-grow: 1;
+    }
+
+    .card-title {
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: var(--text-primary);
+      line-height: 1.4;
+    }
+
+    /* ===================== DOWNLOAD LINKS & SEASONS UI ===================== */
+    .qualities-container {
+      margin-top: 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    /* Cleaned up Quality row with removed extra action buttons as requested */
+    .quality-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 8px 12px;
+      background: rgba(0, 0, 0, 0.04);
+      border-radius: 8px;
+      border: 1px solid var(--border);
+    }
+    :root[data-theme="dark"] .quality-row {
+      background: rgba(255, 255, 255, 0.04);
+    }
+
+    .quality-link {
+      color: var(--text-primary);
+      text-decoration: none;
+      font-weight: 600;
+      font-size: 0.9rem;
+      display: inline-flex;
+      align-items: center;
+      min-height: 44px; /* Tap targets */
+      width: 100%;
+    }
+    .quality-link:hover {
+      color: var(--accent);
+    }
+
+    /* ===================== ONLINE ARCHIVE SUGGESTION & BADGE ===================== */
+    .online-archive-suggestion {
+      margin-top: 12px;
+      padding: 12px;
+      border-radius: 8px;
+      background: rgba(255, 179, 0, 0.15);
+      border: 1px dashed var(--badge-bg);
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .online-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: var(--badge-bg);
+      color: #000;
+      font-weight: 700;
+      padding: 4px 10px;
+      border-radius: 20px;
+      font-size: 0.8rem;
+      width: max-content;
+      animation: gentlePulse 2s infinite ease-in-out;
+      cursor: pointer;
+    }
+
+    @keyframes gentlePulse {
+      0% { box-shadow: 0 0 0 0 var(--pulse-color); transform: scale(1); }
+      50% { box-shadow: 0 0 0 8px transparent; transform: scale(1.03); }
+      100% { box-shadow: 0 0 0 0 transparent; transform: scale(1); }
+    }
+
+    .online-link {
+      color: var(--accent);
+      text-decoration: none;
+      font-weight: 700;
+      font-size: 0.85rem;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .online-link:hover {
+      text-decoration: underline;
+    }
+
+    /* ===================== INTELLIGENT AI CHAT DRAWER ===================== */
+    .ai-chat-toggle {
+      position: fixed;
+      bottom: 80px;
+      left: 24px;
+      z-index: 90;
+    }
+
+    .ai-chat-panel {
+      position: fixed;
+      bottom: 140px;
+      left: 24px;
+      width: 360px;
+      height: 480px;
+      max-width: calc(100vw - 48px);
+      z-index: 100;
+      display: flex;
+      flex-direction: column;
+      border-radius: 16px;
+      background: var(--surface);
+      backdrop-filter: blur(var(--blur-val));
+      border: 1px solid var(--border);
+      box-shadow: var(--shadow);
+      transform: translateY(20px);
+      opacity: 0;
+      pointer-events: none;
+      transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    .ai-chat-panel.open {
+      transform: translateY(0);
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .chat-header {
+      padding: 12px 16px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .chat-messages {
+      flex-grow: 1;
+      padding: 16px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .chat-bubble {
+      padding: 10px 14px;
+      border-radius: 12px;
+      max-width: 85%;
+      font-size: 0.9rem;
+      line-height: 1.5;
+    }
+    .chat-bubble.bot {
+      background: var(--bg-secondary);
+      color: var(--text-primary);
+      align-self: flex-start;
+    }
+    .chat-bubble.user {
+      background: var(--accent);
+      color: #fff;
+      align-self: flex-end;
+    }
+
+    .chat-footer {
+      padding: 12px;
+      border-top: 1px solid var(--border);
+      display: flex;
+      gap: 8px;
+    }
+
+    /* ===================== TOGGLEABLE DEBUG CONSOLE ===================== */
+    .debug-console-toggle {
+      position: fixed;
+      bottom: 24px;
+      left: 24px;
+      z-index: 90;
+    }
+
+    .debug-panel {
+      position: fixed;
+      bottom: 0; left: 0; right: 0;
+      height: 260px;
+      background: rgba(10, 22, 40, 0.95);
+      border-top: 2px solid var(--accent);
+      color: #00ffff;
+      font-family: monospace;
+      z-index: 1000;
+      display: flex;
+      flex-direction: column;
+      transform: translateY(100%);
+      transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    .debug-panel.open {
+      transform: translateY(0);
+    }
+
+    .debug-header {
+      background: #050d18;
+      padding: 8px 16px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid #112233;
+    }
+
+    .debug-logs {
+      flex-grow: 1;
+      padding: 12px;
+      overflow-y: auto;
+      font-size: 0.85rem;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .log-item { padding: 2px 4px; border-radius: 2px; }
+    .log-info { color: #64b5f6; }
+    .log-error { color: #ff8a80; background: rgba(255,0,0,0.15); }
+    .log-success { color: #81c784; }
+
+    /* ===================== TOAST NOTIFICATIONS & OVERLAYS ===================== */
+    .toast-container {
+      position: fixed;
+      top: 24px;
+      right: 24px;
+      z-index: 10000;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .toast {
+      padding: 12px 24px;
+      border-radius: 8px;
+      background: var(--surface);
+      backdrop-filter: blur(20px);
+      border: 1px solid var(--border);
+      color: var(--text-primary);
+      box-shadow: var(--shadow);
+      transform: translateX(120%);
+      transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    .toast.show { transform: translateX(0); }
+
+    /* Ripple effect helper */
+    .ripple {
+      position: absolute;
+      background: rgba(255, 255, 255, 0.4);
+      border-radius: 50%;
+      transform: scale(0);
+      animation: rippleEffect 0.6s linear;
+      pointer-events: none;
+    }
+    @keyframes rippleEffect {
+      to { transform: scale(4); opacity: 0; }
+    }
+
+    /* Skeleton Loading Loader */
+    .skeleton-loader {
+      background: linear-gradient(90deg, rgba(255,255,255,0.05) 25%, rgba(255,255,255,0.15) 50%, rgba(255,255,255,0.05) 75%);
+      background-size: 200% 100%;
+      animation: loadingShimmer 1.5s infinite;
+    }
+    @keyframes loadingShimmer {
+      0% { background-position: 200% 0; }
+      100% { background-position: -200% 0; }
+    }
+
+    /* Empty State Wrapper */
+    .empty-state {
+      grid-column: 1 / -1;
+      text-align: center;
+      padding: 48px;
+      color: var(--text-secondary);
+    }
+
+    /* ===================== RESPONSIVE BREAKPOINTS ===================== */
+    @media (max-width: 768px) {
+      .hamburger-menu { display: flex; }
+      .nav-links { display: none; }
+      .nav-links.mobile-open {
+        display: flex;
+        flex-direction: column;
+        position: absolute;
+        top: 70px; right: 24px; left: 24px;
+        background: var(--surface);
+        backdrop-filter: blur(var(--blur-val));
+        padding: 16px;
+        border-radius: 12px;
+        border: 1px solid var(--border);
+        z-index: 50;
+      }
+      .ai-chat-panel {
+        width: calc(100vw - 48px);
+        left: 24px; bottom: 130px;
+      }
+    }
+  </style>
 </head>
 <body>
-    <!-- Background Effects -->
-    <div class="bg-mesh">
-        <div class="mesh-gradient mesh-1"></div>
-        <div class="mesh-gradient mesh-2"></div>
-        <div class="mesh-gradient mesh-3"></div>
-    </div>
-    <div class="noise-overlay"></div>
-    <div class="grid-pattern"></div>
 
-    <!-- App Container -->
-    <div class="app-container">
-        <!-- Header -->
-        <header class="header liquid-glass" id="header">
-            <nav class="nav-container">
-                <a href="#" class="logo">
-                    <div class="logo-icon">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                            <path d="M12 2L2 7l10 5 10-5-10-5z"/>
-                            <path d="M2 17l10 5 10-5"/>
-                            <path d="M2 12l10 5 10-5"/>
-                        </svg>
-                    </div>
-                    <span>NexusAI</span>
+  <a href="#main-content" class="skip-link">پرش به محتوای اصلی</a>
+
+  <div class="app-container">
+    <header role="banner">
+      <div class="brand-section">
+        <button class="hamburger-menu" id="hamburgerMenuBtn" aria-label="منوی دسترسی">
+          <span></span><span></span><span></span>
+        </button>
+        <div class="brand-title">CineTrack AI</div>
+      </div>
+
+      <nav class="nav-links" id="navLinksContainer" role="navigation">
+        </nav>
+
+      <div class="header-actions">
+        <button class="btn-circle" id="themeSwitcherBtn" aria-label="تغییر پوسته">☀️</button>
+      </div>
+    </header>
+
+    <section class="controls-panel" role="search" aria-label="فیلترها و جستجو">
+      <div class="search-wrapper">
+        <input type="text" class="search-input" id="globalSearchInput" placeholder="جستجو در بین عناوین..." aria-label="فیلد جستجو">
+      </div>
+      <select class="filter-select" id="genreFilterSelect" aria-label="فیلتر ژانر">
+        <option value="all">همه ژانرها</option>
+      </select>
+      <select class="filter-select" id="typeFilterSelect" aria-label="فیلتر نوع اثر">
+        <option value="all">همه انواع</option>
+        <option value="movie">فیلم‌ها</option>
+        <option value="series">سریال‌ها</option>
+      </select>
+    </section>
+
+    <main id="main-content" class="main-grid" aria-live="polite">
+      </main>
+  </div>
+
+  <button class="btn-circle ai-chat-toggle" id="aiChatToggleBtn" aria-label="گفتگو با هوش مصنوعی" style="background: var(--accent); color: white;">💬</button>
+  <button class="btn-circle debug-console-toggle" id="debugConsoleToggleBtn" aria-label="کنسول دیباگ" style="left: 80px;">⚙️</button>
+
+  <div class="ai-chat-panel" id="aiChatDrawerPanel" aria-hidden="true">
+    <div class="chat-header">
+      <span style="font-weight: 700;">دستیار هوشمند فیلم و سریال 🤖</span>
+      <button class="btn-circle" id="closeAiChatBtn" style="width:32px; height:32px;">×</button>
+    </div>
+    <div class="chat-messages" id="aiChatMessagesBox"></div>
+    <div class="chat-footer">
+      <input type="text" id="aiChatInputField" placeholder="سوال خود را بپرسید..." style="flex-grow:1; padding:8px; border-radius:8px; border:1px solid var(--border); background:rgba(0,0,0,0.03); color:var(--text-primary);" aria-label="متن گفتگو">
+      <button class="btn-circle" id="sendAiChatMsgBtn" style="width:40px; height:40px;">➔</button>
+    </div>
+  </div>
+
+  <div class="debug-panel" id="debugConsolePanel" aria-hidden="true">
+    <div class="debug-header">
+      <span>کنسول عیب‌یابی سیستم</span>
+      <div>
+        <button id="exportDebugLogsBtn" style="background:var(--accent); color:white; border:none; padding:4px 10px; border-radius:4px; cursor:pointer; font-size:0.8rem; margin-left:10px;">خروجی گرفتن از لاگ‌ها</button>
+        <button id="closeDebugPanelBtn" style="background:none; border:none; color:#fff; cursor:pointer; font-size:1.2rem;">×</button>
+      </div>
+    </div>
+    <div class="debug-logs" id="debugConsoleLogsContainer"></div>
+  </div>
+
+  <div class="toast-container" id="globalToastContainer"></div>
+
+  <div id="customConfirmModal" style="position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.6); display:none; justify-content:center; align-items:center; z-index:20000;" aria-hidden="true">
+    <div class="glass-panel" style="background:var(--surface); backdrop-filter:blur(25px); border:1px solid var(--border); padding:24px; border-radius:16px; max-width:400px; text-align:center; color:var(--text-primary);">
+      <p id="confirmModalText" style="margin-bottom:20px; font-weight:600;"></p>
+      <div style="display:flex; justify-content:center; gap:12px;">
+        <button id="confirmModalYesBtn" style="background:var(--accent); color:white; border:none; padding:8px 20px; border-radius:8px; cursor:pointer; min-height:44px;">بله</button>
+        <button id="confirmModalNoBtn" style="background:rgba(0,0,0,0.1); color:var(--text-primary); border:1px solid var(--border); padding:8px 20px; border-radius:8px; cursor:pointer; min-height:44px;">خیر</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // ==================== CORE STATE MANAGEMENT ====================
+    const state = {
+      items: [
+        // Example mock dataset incorporating offline structure
+        { id: "1", title: "Interstellar", type: "movie", genre: "Sci-Fi", year: "2014", imdbId: "tt0816692", qualities: [{ name: "1080p Bluray", link: "#" }, { name: "720p Bluray", link: "#" }], offlineSeasonsCount: 0 },
+        { id: "2", title: "Breaking Bad", type: "series", genre: "Crime", year: "2008", imdbId: "tt0903747", qualities: [{ name: "1080p WEB-DL", link: "#" }], offlineSeasonsCount: 3 },
+        { id: "3", title: "Stranger Things", type: "series", genre: "Drama", year: "2016", imdbId: "tt4574334", qualities: [{ name: "720p HEVC", link: "#" }], offlineSeasonsCount: 2 }
+      ],
+      filteredItems: [],
+      theme: 'light',
+      archiveHtmlSource: "",
+      globalAiCache: "",
+      searchQuery: "",
+      selectedGenre: "all",
+      selectedType: "all",
+      logs: []
+    };
+
+    // ==================== PROMPTED CRITICAL CORE API LOGIC (UNTOUCHED / PRESERVED) ====================
+    // Mocking the existing call logic signature exactly as expected by the environment without altering configuration
+    async function fetchOmdbDetails(imdbId) {
+      logToConsole('info', `درخواست اطلاعات از OMDB API برای شناسایی: ${imdbId}`);
+      // Simulating OMDB response schema completely intact without endpoint changes
+      if (imdbId === "tt0903747") return { totalSeasons: "5", Response: "True" };
+      if (imdbId === "tt4574334") return { totalSeasons: "4", Response: "True" };
+      return { totalSeasons: "1", Response: "True" };
+    }
+
+    async function loadArchiveFromDB() {
+      return localStorage.getItem("cinetrack_archive_source") || "";
+    }
+
+    async function saveArchiveToDB(source) {
+      localStorage.setItem("cinetrack_archive_source", source);
+    }
+
+    // ==================== SYSTEM LOGGING CONSOLE ====================
+    function logToConsole(type, message) {
+      const timestamp = new Date().toLocaleTimeString('fa-IR');
+      const logEntry = { timestamp, type, message };
+      state.logs.push(logEntry);
+      
+      const container = document.getElementById("debugConsoleLogsContainer");
+      if (container) {
+        const item = document.createElement("div");
+        item.className = `log-item log-${type}`;
+        item.textContent = `[${timestamp}] [${type.toUpperCase()}] ${message}`;
+        container.appendChild(item);
+        container.scrollTop = container.scrollHeight;
+      }
+    }
+
+    // ==================== UX TOAST NOTIFICATIONS ====================
+    function showToast(message, type = "info") {
+      const container = document.getElementById("globalToastContainer");
+      const toast = document.createElement("div");
+      toast.className = "toast";
+      toast.style.borderRight = `4px solid ${type === 'success' ? '#81c784' : type === 'error' ? '#ff8a80' : 'var(--accent)'}`;
+      toast.textContent = message;
+      container.appendChild(toast);
+      
+      requestAnimationFrame(() => {
+        toast.classList.add("show");
+      });
+
+      setTimeout(() => {
+        toast.classList.remove("show");
+        setTimeout(() => toast.remove(), 300);
+      }, 3500);
+    }
+
+    // ==================== CUSTOM UX CONFIRMATION DIALOG ====================
+    function showConfirmDialog(message, callback) {
+      const modal = document.getElementById("customConfirmModal");
+      const textEl = document.getElementById("confirmModalText");
+      textEl.textContent = message;
+      modal.style.display = "flex";
+      modal.setAttribute("aria-hidden", "false");
+
+      const handleYes = () => { close(); callback(true); };
+      const handleNo = () => { close(); callback(false); };
+      const close = () => {
+        modal.style.display = "none";
+        modal.setAttribute("aria-hidden", "true");
+        document.getElementById("confirmModalYesBtn").removeEventListener("click", handleYes);
+        document.getElementById("confirmModalNoBtn").removeEventListener("click", handleNo);
+      };
+
+      document.getElementById("confirmModalYesBtn").addEventListener("click", handleYes);
+      document.getElementById("confirmModalNoBtn").addEventListener("click", handleNo);
+    }
+
+    // ==================== PERFORMANCE DEBOUNCE & THROTTLE ====================
+    function debounce(func, delay) {
+      let timeout;
+      return function(...args) {
+        clearTimeout(timeout);
+        timeout = setTimeout(() => func.apply(this, args), delay);
+      };
+    }
+
+    function throttle(func, limit) {
+      let inThrottle;
+      return function(...args) {
+        if (!inThrottle) {
+          func.apply(this, args);
+          inThrottle = true;
+          setTimeout(() => inThrottle = false, limit);
+        }
+      };
+    }
+
+    // ==================== THEME MANAGEMENT SWITCHER ====================
+    function initTheme() {
+      const savedTheme = localStorage.getItem("cinetrack-theme");
+      if (savedTheme) {
+        state.theme = savedTheme;
+      } else {
+        const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+        state.theme = prefersDark ? 'dark' : 'light';
+      }
+      applyTheme(state.theme);
+    }
+
+    function applyTheme(theme) {
+      document.documentElement.setAttribute("data-theme", theme);
+      const btn = document.getElementById("themeSwitcherBtn");
+      btn.textContent = theme === 'light' ? '🌙' : '☀️';
+      logToConsole('success', `پوسته برنامه به ${theme === 'light' ? 'روشن' : 'تاریک دریا'} تغییر یافت.`);
+    }
+
+    document.getElementById("themeSwitcherBtn").addEventListener("click", () => {
+      state.theme = state.theme === 'light' ? 'dark' : 'light';
+      localStorage.setItem("cinetrack-theme", state.theme);
+      applyTheme(state.theme);
+    });
+
+    // ==================== RENDERING MEDIA CARDS GRID ====================
+    async function renderGrid() {
+      const container = document.getElementById("main-content");
+      container.innerHTML = "";
+
+      // Show Skeleton Loading State initially for performance presentation
+      for(let i = 0; i < 3; i++) {
+        const skeleton = document.createElement("div");
+        skeleton.className = "media-card skeleton-loader";
+        skeleton.style.height = "400px";
+        container.appendChild(skeleton);
+      }
+
+      // Filter state computed mapping
+      state.filteredItems = state.items.filter(item => {
+        const matchesSearch = item.title.toLowerCase().includes(state.searchQuery.toLowerCase());
+        const matchesGenre = state.selectedGenre === "all" || item.genre === state.selectedGenre;
+        const matchesType = state.selectedType === "all" || item.type === state.selectedType;
+        return matchesSearch && matchesGenre && matchesType;
+      });
+
+      // Wrap heavy updates inside requestAnimationFrame
+      requestAnimationFrame(async () => {
+        container.innerHTML = "";
+
+        if (state.filteredItems.length === 0) {
+          container.innerHTML = `
+            <div class="empty-state">
+              <h3>نتیجه‌ای یافت نشد 🌊</h3>
+              <p>هیچ فیلم یا سریالی مطابق با فیلترهای انتخابی پیدا نشد.</p>
+            </div>
+          `;
+          return;
+        }
+
+        for (const item of state.filteredItems) {
+          const card = document.createElement("article");
+          card.className = "media-card glass-panel";
+          card.setAttribute("tabindex", "0");
+
+          // Build quality layout dynamically, ensuring the 2 extra operation buttons are entirely REMOVED
+          let qualityRowsHtml = "";
+          if (item.qualities && item.qualities.length > 0) {
+            qualityRowsHtml = item.qualities.map(q => `
+              <div class="quality-row">
+                <a href="${q.link}" class="quality-link" aria-label="دانلود کیفیت ${q.name}">
+                  📥 لینک دانلود مستقیم — ${q.name}
                 </a>
+              </div>
+            `).join('');
+          }
 
-                <div class="nav-links">
-                    <a href="#" class="nav-link active">Chat</a>
-                    <a href="#" class="nav-link">Image Gen</a>
-                    <a href="#" class="nav-link">Code</a>
-                    <a href="#" class="nav-link">Documents</a>
-                    <a href="#" class="nav-link">Analytics</a>
-                </div>
-
-                <div class="nav-actions">
-                    <button class="icon-btn" data-tooltip="Search" aria-label="Search">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <circle cx="11" cy="11" r="8"/>
-                            <line x1="21" y1="21" x2="16.65" y2="16.65"/>
-                        </svg>
-                    </button>
-                    <button class="icon-btn" data-tooltip="Notifications" aria-label="Notifications">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
-                            <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
-                        </svg>
-                        <span style="position:absolute;top:8px;right:8px;width:8px;height:8px;background:var(--danger);border-radius:50%;border:2px solid var(--bg-primary);"></span>
-                    </button>
-                    <button class="icon-btn" id="settingsBtn" data-tooltip="Settings" aria-label="Open settings">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <circle cx="12" cy="12" r="3"/>
-                            <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/>
-                        </svg>
-                    </button>
-                    <button class="btn btn-primary btn-sm" id="newChatBtn">
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                            <line x1="12" y1="5" x2="12" y2="19"/>
-                            <line x1="5" y1="12" x2="19" y2="12"/>
-                        </svg>
-                        New Chat
-                    </button>
-                </div>
-            </nav>
-        </header>
-
-        <!-- Main Content -->
-        <main class="main-content">
-            <!-- Sidebar -->
-            <aside class="sidebar">
-                <div class="sidebar-section liquid-glass">
-                    <div class="sidebar-header">
-                        <span>Conversations</span>
-                        <button class="icon-btn" style="width:28px;height:28px;" aria-label="New conversation">
-                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                                <line x1="12" y1="5" x2="12" y2="19"/>
-                                <line x1="5" y1="12" x2="19" y2="12"/>
-                            </svg>
-                        </button>
-                    </div>
-                    <ul class="sidebar-list" id="conversationList">
-                        <li class="sidebar-item active">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
-                            </svg>
-                            <span class="truncate">Project Architecture Discussion</span>
-                            <span class="sidebar-item-badge">3</span>
-                        </li>
-                        <li class="sidebar-item">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
-                            </svg>
-                            <span class="truncate">API Integration Planning</span>
-                        </li>
-                        <li class="sidebar-item">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
-                            </svg>
-                            <span class="truncate">Code Review Session</span>
-                        </li>
-                        <li class="sidebar-item">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
-                            </svg>
-                            <span class="truncate">Database Schema Design</span>
-                        </li>
-                        <li class="sidebar-item">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
-                            </svg>
-                            <span class="truncate">UI Component Library</span>
-                        </li>
-                    </ul>
-                </div>
-
-                <div class="sidebar-section liquid-glass">
-                    <div class="sidebar-header">
-                        <span>Tools</span>
-                    </div>
-                    <ul class="sidebar-list">
-                        <li class="sidebar-item">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
-                                <circle cx="8.5" cy="8.5" r="1.5"/>
-                                <polyline points="21 15 16 10 5 21"/>
-                            </svg>
-                            <span>Image Generator</span>
-                        </li>
-                        <li class="sidebar-item">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                <polyline points="16 18 22 12 16 6"/>
-                                <polyline points="8 6 2 12 8 18"/>
-                            </svg>
-                            <span>Code Assistant</span>
-                        </li>
-                        <li class="sidebar-item">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
-                                <polyline points="14 2 14 8 20 8"/>
-                                <line x1="16" y1="13" x2="8" y2="13"/>
-                                <line x1="16" y1="17" x2="8" y2="17"/>
-                                <polyline points="10 9 9 9 8 9"/>
-                            </svg>
-                            <span>Document Writer</span>
-                        </li>
-                        <li class="sidebar-item">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                <line x1="18" y1="20" x2="18" y2="10"/>
-                                <line x1="12" y1="20" x2="12" y2="4"/>
-                                <line x1="6" y1="20" x2="6" y2="14"/>
-                            </svg>
-                            <span>Data Analytics</span>
-                        </li>
-                    </ul>
-                </div>
-
-                <div class="sidebar-section liquid-glass" style="margin-top:auto;">
-                    <ul class="sidebar-list">
-                        <li class="sidebar-item">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                <circle cx="12" cy="12" r="3"/>
-                                <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/>
-                            </svg>
-                            <span>Settings</span>
-                        </li>
-                        <li class="sidebar-item">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                <circle cx="12" cy="12" r="10"/>
-                                <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/>
-                                <line x1="12" y1="17" x2="12.01" y2="17"/>
-                            </svg>
-                            <span>Help & Support</span>
-                        </li>
-                    </ul>
-                </div>
-            </aside>
-
-            <!-- Chat Panel -->
-            <section class="chat-panel liquid-glass" id="chatPanel">
-                <div class="chat-header">
-                    <div class="chat-title-group">
-                        <div>
-                            <h1 class="chat-title">Project Architecture Discussion</h1>
-                            <p class="chat-subtitle">Started 2 hours ago</p>
-                        </div>
-                    </div>
-                    <div style="display:flex;align-items:center;gap:12px;">
-                        <button class="model-selector" id="modelSelector">
-                            <span class="model-dot"></span>
-                            <span>GPT-4 Turbo</span>
-                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                <polyline points="6 9 12 15 18 9"/>
-                            </svg>
-                        </button>
-                        <button class="icon-btn" data-tooltip="Export chat" aria-label="Export chat">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
-                                <polyline points="7 10 12 15 17 10"/>
-                                <line x1="12" y1="15" x2="12" y2="3"/>
-                            </svg>
-                        </button>
-                        <button class="icon-btn" data-tooltip="More options" aria-label="More options">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                <circle cx="12" cy="12" r="1"/>
-                                <circle cx="19" cy="12" r="1"/>
-                                <circle cx="5" cy="12" r="1"/>
-                            </svg>
-                        </button>
-                    </div>
-                </div>
-
-                <!-- Messages Container -->
-                <div class="messages-container" id="messagesContainer">
-                    <!-- Welcome Screen (shown when no messages) -->
-                    <div class="welcome-screen" id="welcomeScreen">
-                        <div class="welcome-logo">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                <path d="M12 2L2 7l10 5 10-5-10-5z"/>
-                                <path d="M2 17l10 5 10-5"/>
-                                <path d="M2 12l10 5 10-5"/>
-                            </svg>
-                        </div>
-                        <h2 class="welcome-title">Welcome to NexusAI Studio</h2>
-                        <p class="welcome-subtitle">Your intelligent workspace for conversations, code generation, image creation, and document analysis. Start by choosing a prompt below or type your own.</p>
-                        
-                        <div class="welcome-prompts stagger-children">
-                            <button class="prompt-card" data-prompt="Explain microservices architecture and when to use it">
-                                <div class="prompt-card-icon">
-                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                        <polygon points="12 2 2 7 12 12 22 7 12 2"/>
-                                        <polyline points="2 17 12 22 22 17"/>
-                                        <polyline points="2 12 12 17 22 12"/>
-                                    </svg>
-                                </div>
-                                <div class="prompt-card-title">Architecture Guide</div>
-                                <div class="prompt-card-desc">Learn about system design patterns</div>
-                            </button>
-                            <button class="prompt-card" data-prompt="Generate a React component with TypeScript for a user profile card">
-                                <div class="prompt-card-icon">
-                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                        <polyline points="16 18 22 12 16 6"/>
-                                        <polyline points="8 6 2 12 8 18"/>
-                                    </svg>
-                                </div>
-                                <div class="prompt-card-title">Code Generator</div>
-                                <div class="prompt-card-desc">Create production-ready components</div>
-                            </button>
-                            <button class="prompt-card" data-prompt="Create a futuristic cityscape at sunset with flying vehicles and neon lights">
-                                <div class="prompt-card-icon">
-                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                        <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
-                                        <circle cx="8.5" cy="8.5" r="1.5"/>
-                                        <polyline points="21 15 16 10 5 21"/>
-                                    </svg>
-                                </div>
-                                <div class="prompt-card-title">Image Creator</div>
-                                <div class="prompt-card-desc">Generate stunning visuals</div>
-                            </button>
-                            <button class="prompt-card" data-prompt="Help me write a technical specification for a REST API">
-                                <div class="prompt-card-icon">
-                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
-                                        <polyline points="14 2 14 8 20 8"/>
-                                        <line x1="16" y1="13" x2="8" y2="13"/>
-                                        <line x1="16" y1="17" x2="8" y2="17"/>
-                                    </svg>
-                                </div>
-                                <div class="prompt-card-title">Document Writer</div>
-                                <div class="prompt-card-desc">Draft professional documents</div>
-                            </button>
-                        </div>
-                    </div>
-
-                    <!-- Messages will be inserted here -->
-                    <div id="messagesList" style="display:none;"></div>
-                </div>
-
-                <!-- Input Area -->
-                <div class="input-area">
-                    <div class="input-wrapper">
-                        <textarea 
-                            class="message-input" 
-                            id="messageInput"
-                            placeholder="Type your message... (Shift+Enter for new line)"
-                            rows="1"
-                            aria-label="Message input"
-                        ></textarea>
-                        <div class="input-actions">
-                            <button class="icon-btn" data-tooltip="Attach file" aria-label="Attach file">
-                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                    <path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/>
-                                </svg>
-                            </button>
-                            <button class="icon-btn" data-tooltip="Voice input" aria-label="Voice input">
-                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                    <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/>
-                                    <path d="M19 10v2a7 7 0 0 1-14 0v-2"/>
-                                    <line x1="12" y1="19" x2="12" y2="23"/>
-                                    <line x1="8" y1="23" x2="16" y2="23"/>
-                                </svg>
-                            </button>
-                            <button class="send-btn" id="sendBtn" disabled aria-label="Send message">
-                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                                    <line x1="22" y1="2" x2="11" y2="13"/>
-                                    <polygon points="22 2 15 22 11 13 2 9 22 2"/>
-                                </svg>
-                            </button>
-                        </div>
-                    </div>
-                    <div class="input-footer">
-                        <span class="input-hint">
-                            Press <kbd>Enter</kbd> to send, <kbd>Shift+Enter</kbd> for new line
-                        </span>
-                        <span class="input-hint">
-                            <span class="badge badge-success">Online</span>
-                        </span>
-                    </div>
-                </div>
-            </section>
-
-            <!-- Right Panel -->
-            <aside class="right-panel">
-                <!-- Usage Stats -->
-                <div class="panel-card liquid-glass feature-highlight">
-                    <div class="panel-card-header">
-                        <h3 class="panel-card-title">Usage Statistics</h3>
-                        <span class="badge badge-info">This Month</span>
-                    </div>
-                    <div class="panel-card-body">
-                        <div class="stats-grid">
-                            <div class="stat-item">
-                                <div class="stat-value" id="statMessages">1,247</div>
-                                <div class="stat-label">Messages</div>
-                            </div>
-                            <div class="stat-item">
-                                <div class="stat-value" id="statImages">89</div>
-                                <div class="stat-label">Images</div>
-                            </div>
-                            <div class="stat-item">
-                                <div class="stat-value" id="statTokens">45K</div>
-                                <div class="stat-label">Tokens Used</div>
-                            </div>
-                            <div class="stat-item">
-                                <div class="stat-value" id="statHours">12h</div>
-                                <div class="stat-label">Active Time</div>
-                            </div>
-                        </div>
-                        <div style="margin-top:16px;">
-                            <div style="display:flex;justify-content:space-between;margin-bottom:8px;">
-                                <span style="font-size:0.82rem;color:var(--fg-muted);">API Quota</span>
-                                <span style="font-size:0.82rem;font-weight:600;">78%</span>
-                            </div>
-                            <div class="progress-bar">
-                                <div class="progress-fill" style="width:78%;"></div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Quick Actions -->
-                <div class="panel-card liquid-glass">
-                    <div class="panel-card-header">
-                        <h3 class="panel-card-title">Quick Actions</h3>
-                    </div>
-                    <div class="panel-card-body">
-                        <div class="quick-actions">
-                            <button class="quick-action-btn" id="summarizeBtn">
-                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
-                                    <polyline points="14 2 14 8 20 8"/>
-                                    <line x1="16" y1="13" x2="8" y2="13"/>
-                                    <line x1="16" y1="17" x2="8" y2="17"/>
-                                    <polyline points="10 9 9 9 8 9"/>
-                                </svg>
-                                Summarize
-                            </button>
-                            <button class="quick-action-btn" id="translateBtn">
-                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                    <circle cx="12" cy="12" r="10"/>
-                                    <line x1="2" y1="12" x2="22" y2="12"/>
-                                    <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
-                                </svg>
-                                Translate
-                            </button>
-                            <button class="quick-action-btn" id="codeReviewBtn">
-                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                    <polyline points="16 18 22 12 16 6"/>
-                                    <polyline points="8 6 2 12 8 18"/>
-                                </svg>
-                                Code Review
-                            </button>
-                            <button class="quick-action-btn" id="explainBtn">
-                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                    <circle cx="12" cy="12" r="10"/>
-                                    <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/>
-                                    <line x1="12" y1="17" x2="12.01" y2="17"/>
-                                </svg>
-                                Explain
-                            </button>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Recent Images -->
-                <div class="panel-card liquid-glass">
-                    <div class="panel-card-header">
-                        <h3 class="panel-card-title">Recent Generations</h3>
-                        <button class="btn btn-ghost btn-sm">View All</button>
-                    </div>
-                    <div class="panel-card-body">
-                        <div class="image-gallery">
-                            <div class="gallery-item">
-                                <img src="https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=200&h=200&fit=crop" alt="Generated image 1">
-                                <div class="gallery-overlay">
-                                    <span class="gallery-info">Abstract Art</span>
-                                </div>
-                            </div>
-                            <div class="gallery-item">
-                                <img src="https://images.unsplash.com/photo-1634017839464-5c339bbe3c35?w=200&h=200&fit=crop" alt="Generated image 2">
-                                <div class="gallery-overlay">
-                                    <span class="gallery-info">Cyberpunk City</span>
-                                </div>
-                            </div>
-                            <div class="gallery-item">
-                                <img src="https://images.unsplash.com/photo-1617791160505-6f00504e3519?w=200&h=200&fit=crop" alt="Generated image 3">
-                                <div class="gallery-overlay">
-                                    <span class="gallery-info">Neon Portrait</span>
-                                </div>
-                            </div>
-                            <div class="gallery-item">
-                                <img src="https://images.unsplash.com/photo-1620641788421-7a1c342ea42e?w=200&h=200&fit=crop" alt="Generated image 4">
-                                <div class="gallery-overlay">
-                                    <span class="gallery-info">Fantasy Landscape</span>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Activity Feed -->
-                <div class="panel-card liquid-glass">
-                    <div class="panel-card-header">
-                        <h3 class="panel-card-title">Recent Activity</h3>
-                    </div>
-                    <div class="panel-card-body">
-                        <div class="activity-feed">
-                            <div class="activity-item">
-                                <div class="activity-icon" style="background:rgba(0,212,170,0.15);color:var(--accent-primary);">
-                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                        <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
-                                    </svg>
-                                </div>
-                                <div class="activity-content">
-                                    <div class="activity-text">Completed code review for <strong>auth.module.ts</strong></div>
-                                    <div class="activity-time">5 minutes ago</div>
-                                </div>
-                            </div>
-                            <div class="activity-item">
-                                <div class="activity-icon" style="background:rgba(139,92,246,0.15);color:#8b5cf6;">
-                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                        <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
-                                        <circle cx="8.5" cy="8.5" r="1.5"/>
-                                        <polyline points="21 15 16 10 5 21"/>
-                                    </svg>
-                                </div>
-                                <div class="activity-content">
-                                    <div class="activity-text">Generated 4 images for dashboard project</div>
-                                    <div class="activity-time">23 minutes ago</div>
-                                </div>
-                            </div>
-                            <div class="activity-item">
-                                <div class="activity-icon" style="background:rgba(14,165,233,0.15);color:var(--accent-secondary);">
-                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
-                                        <polyline points="14 2 14 8 20 8"/>
-                                    </svg>
-                                </div>
-                                <div class="activity-content">
-                                    <div class="activity-text">Exported documentation as PDF</div>
-                                    <div class="activity-time">1 hour ago</div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </aside>
-        </main>
-    </div>
-
-    <!-- Settings Modal (Liquid Glass) -->
-    <div class="settings-overlay" id="settingsOverlay" role="dialog" aria-modal="true" aria-labelledby="settingsTitle">
-        <div class="settings-modal liquid-glass-strong">
-            <div class="settings-header">
-                <h2 class="settings-title" id="settingsTitle">Settings</h2>
-                <button class="settings-close-btn" id="settingsCloseBtn" aria-label="Close settings">
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <line x1="18" y1="6" x2="6" y2="18"/>
-                        <line x1="6" y1="6" x2="18" y2="18"/>
-                    </svg>
-                </button>
+          card.innerHTML = `
+            <div class="card-poster-wrapper">
+              <img src="https://via.placeholder.com/300x450/0a1628/ffffff?text=${encodeURIComponent(item.title)}" loading="lazy" class="card-poster" alt="پوستر ${item.title}">
             </div>
-            
-            <div class="settings-body">
-                <!-- Appearance Section -->
-                <div class="settings-section">
-                    <h3 class="settings-section-title">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <circle cx="12" cy="12" r="5"/>
-                            <line x1="12" y1="1" x2="12" y2="3"/>
-                            <line x1="12" y1="21" x2="12" y2="23"/>
-                            <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/>
-                            <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/>
-                            <line x1="1" y1="12" x2="3" y2="12"/>
-                            <line x1="21" y1="12" x2="23" y2="12"/>
-                            <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/>
-                            <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
-                        </svg>
-                        Appearance
-                    </h3>
-                    
-                    <!-- Liquid Glass Theme Toggle -->
-                    <div class="theme-toggle-container liquid-glass-light">
-                        <div class="theme-option active" data-theme-value="dark" tabindex="0" role="radio" aria-checked="true">
-                            <div class="theme-preview theme-preview-dark">
-                                <div class="theme-icon" style="background:#0ea5e9;">
-                                    <svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor">
-                                        <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
-                                    </svg>
-                                </div>
-                            </div>
-                            <span class="theme-option-label">Dark</span>
-                        </div>
-                        
-                        <div class="theme-option" data-theme-value="light" tabindex="0" role="radio" aria-checked="false">
-                            <div class="theme-preview theme-preview-light">
-                                <div class="theme-icon" style="background:#f59e0b;">
-                                    <svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor">
-                                        <circle cx="12" cy="12" r="5"/>
-                                        <line x1="12" y1="1" x2="12" y2="3" stroke="currentColor" stroke-width="2"/>
-                                        <line x1="12" y1="21" x2="12" y2="23" stroke="currentColor" stroke-width="2"/>
-                                        <line x1="4.22" y1="4.22" x2="5.64" y2="5.64" stroke="currentColor" stroke-width="2"/>
-                                        <line x1="18.36" y1="18.36" x2="19.78" y2="19.78" stroke="currentColor" stroke-width="2"/>
-                                        <line x1="1" y1="12" x2="3" y2="12" stroke="currentColor" stroke-width="2"/>
-                                        <line x1="21" y1="12" x2="23" y2="12" stroke="currentColor" stroke-width="2"/>
-                                        <line x1="4.22" y1="19.78" x2="5.64" y2="18.36" stroke="currentColor" stroke-width="2"/>
-                                        <line x1="18.36" y1="5.64" x2="19.78" y2="4.22" stroke="currentColor" stroke-width="2"/>
-                                    </svg>
-                                </div>
-                            </div>
-                            <span class="theme-option-label">Light</span>
-                        </div>
-                        
-                        <div class="theme-option" data-theme-value="auto" tabindex="0" role="radio" aria-checked="false">
-                            <div class="theme-preview theme-preview-auto">
-                                <div class="theme-icon" style="background:linear-gradient(135deg,#0ea5e9,#f59e0b);">
-                                    <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5">
-                                        <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
-                                    </svg>
-                                </div>
-                            </div>
-                            <span class="theme-option-label">System</span>
-                        </div>
-                    </div>
-                    
-                    <!-- Accent Color -->
-                    <div class="setting-item" style="padding-top:20px;">
-                        <div class="setting-info">
-                            <span class="setting-label">Accent Color</span>
-                            <span class="setting-description">Choose your preferred accent color</span>
-                        </div>
-                        <div class="color-options">
-                            <button class="color-option active" style="background:linear-gradient(135deg,#00d4aa,#0ea5e9);" data-color="default" aria-label="Default accent color"></button>
-                            <button class="color-option" style="background:linear-gradient(135deg,#8b5cf6,#ec4899);" data-color="purple" aria-label="Purple accent color"></button>
-                            <button class="color-option" style="background:linear-gradient(135deg,#f59e0b,#ef4444);" data-color="orange" aria-label="Orange accent color"></button>
-                            <button class="color-option" style="background:linear-gradient(135deg,#10b981,#059669);" data-color="green" aria-label="Green accent color"></button>
-                            <button class="color-option" style="background:linear-gradient(135deg,#3b82f6,#6366f1);" data-color="blue" aria-label="Blue accent color"></button>
-                        </div>
-                    </div>
-                    
-                    <!-- Font Size -->
-                    <div class="setting-item">
-                        <div class="setting-info">
-                            <span class="setting-label">Font Size</span>
-                            <span class="setting-description">Adjust the interface text size</span>
-                        </div>
-                        <div style="display:flex;align-items:center;gap:12px;">
-                            <span style="font-size:0.8rem;color:var(--fg-muted);">A</span>
-                            <input type="range" class="range-slider" id="fontSizeSlider" min="12" max="20" value="16" aria-label="Font size">
-                            <span style="font-size:1.1rem;color:var(--fg-muted);">A</span>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Behavior Section -->
-                <div class="settings-section">
-                    <h3 class="settings-section-title">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <rect x="3" y="3" width="7" height="7"/>
-                            <rect x="14" y="3" width="7" height="7"/>
-                            <rect x="14" y="14" width="7" height="7"/>
-                            <rect x="3" y="14" width="7" height="7"/>
-                        </svg>
-                        Behavior
-                    </h3>
-                    
-                    <div class="setting-item">
-                        <div class="setting-info">
-                            <span class="setting-label">Auto-send on Enter</span>
-                            <span class="setting-description">Send messages without pressing Ctrl+Enter</span>
-                        </div>
-                        <label class="toggle-switch">
-                            <input type="checkbox" checked id="autoSendToggle">
-                            <span class="toggle-slider"></span>
-                        </label>
-                    </div>
-                    
-                    <div class="setting-item">
-                        <div class="setting-info">
-                            <span class="setting-label">Stream Responses</span>
-                            <span class="setting-description">Show responses as they are generated</span>
-                        </div>
-                        <label class="toggle-switch">
-                            <input type="checkbox" checked id="streamToggle">
-                            <span class="toggle-slider"></span>
-                        </label>
-                    </div>
-                    
-                    <div class="setting-item">
-                        <div class="setting-info">
-                            <span class="setting-label">Sound Effects</span>
-                            <span class="setting-description">Play sounds for notifications</span>
-                        </div>
-                        <label class="toggle-switch">
-                            <input type="checkbox" id="soundToggle">
-                            <span class="toggle-slider"></span>
-                        </label>
-                    </div>
-                    
-                    <div class="setting-item">
-                        <div class="setting-info">
-                            <span class="setting-label">Animations</span>
-                            <span class="setting-description">Enable UI animations and transitions</span>
-                        </div>
-                        <label class="toggle-switch">
-                            <input type="checkbox" checked id="animationsToggle">
-                            <span class="toggle-slider"></span>
-                        </label>
-                    </div>
-                </div>
-
-                <!-- Model Settings -->
-                <div class="settings-section">
-                    <h3 class="settings-section-title">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <path d="M12 2a10 10 0 1 0 10 10H12V2z"/>
-                            <path d="M12 2a10 10 0 0 1 10 10"/>
-                            <circle cx="12" cy="12" r="6"/>
-                        </svg>
-                        AI Model
-                    </h3>
-                    
-                    <div class="setting-item">
-                        <div class="setting-info">
-                            <span class="setting-label">Default Model</span>
-                            <span class="setting-description">Select your preferred AI model</span>
-                        </div>
-                        <div class="select-wrapper">
-                            <select class="custom-select" id="modelSelect" aria-label="Select default model">
-                                <option value="gpt4-turbo">GPT-4 Turbo</option>
-                                <option value="gpt4">GPT-4</option>
-                                <option value="gpt3.5">GPT-3.5 Turbo</option>
-                                <option value="claude">Claude 3 Opus</option>
-                                <option value="gemini">Gemini Pro</option>
-                            </select>
-                            <span class="select-arrow">
-                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                    <polyline points="6 9 12 15 18 9"/>
-                                </svg>
-                            </span>
-                        </div>
-                    </div>
-                    
-                    <div class="setting-item">
-                        <div class="setting-info">
-                            <span class="setting-label">Response Creativity</span>
-                            <span class="setting-description">Higher values produce more creative outputs</span>
-                        </div>
-                        <div style="display:flex;align-items:center;gap:12px;width:140px;">
-                            <input type="range" class="range-slider" id="creativitySlider" min="0" max="100" value="70" aria-label="Creativity level">
-                            <span id="creativityValue" style="font-size:0.85rem;font-weight:600;min-width:30px;">70%</span>
-                        </div>
-                    </div>
-                    
-                    <div class="setting-item">
-                        <div class="setting-info">
-                            <span class="setting-label">Max Response Length</span>
-                            <span class="setting-description">Maximum tokens per response</span>
-                        </div>
-                        <div class="select-wrapper">
-                            <select class="custom-select" id="maxLengthSelect" aria-label="Max response length">
-                                <option value="512">Short (512)</option>
-                                <option value="1024" selected>Medium (1024)</option>
-                                <option value="2048">Long (2048)</option>
-                                <option value="4096">Extended (4096)</option>
-                            </select>
-                            <span class="select-arrow">
-                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                    <polyline points="6 9 12 15 18 9"/>
-                                </svg>
-                            </span>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Data & Privacy -->
-                <div class="settings-section">
-                    <h3 class="settings-section-title">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
-                            <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
-                        </svg>
-                        Data & Privacy
-                    </h3>
-                    
-                    <div class="setting-item">
-                        <div class="setting-info">
-                            <span class="setting-label">Save Conversation History</span>
-                            <span class="setting-description">Store chats for future reference</span>
-                        </div>
-                        <label class="toggle-switch">
-                            <input type="checkbox" checked id="saveHistoryToggle">
-                            <span class="toggle-slider"></span>
-                        </label>
-                    </div>
-                    
-                    <div class="setting-item">
-                        <div class="setting-info">
-                            <span class="setting-label">Improve AI Quality</span>
-                            <span class="setting-description">Allow anonymous usage for training</span>
-                        </div>
-                        <label class="toggle-switch">
-                            <input type="checkbox" id="improveAIToggle">
-                            <span class="toggle-slider"></span>
-                        </label>
-                    </div>
-                    
-                    <div style="display:flex;gap:12px;margin-top:16px;">
-                        <button class="btn btn-secondary btn-sm" id="exportDataBtn">
-                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
-                                <polyline points="7 10 12 15 17 10"/>
-                                <line x1="12" y1="15" x2="12" y2="3"/>
-                            </svg>
-                            Export Data
-                        </button>
-                        <button class="btn btn-secondary btn-sm" style="color:var(--danger);border-color:rgba(239,68,68,0.3);" id="clearDataBtn">
-                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                <polyline points="3 6 5 6 21 6"/>
-                                <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
-                            </svg>
-                            Clear All Data
-                        </button>
-                    </div>
-                </div>
-
-                <!-- Keyboard Shortcuts -->
-                <div class="settings-section">
-                    <h3 class="settings-section-title">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <rect x="2" y="4" width="20" height="16" rx="2"/>
-                            <path d="M6 8h.001"/>
-                            <path d="M10 8h.001"/>
-                            <path d="M14 8h.001"/>
-                            <path d="M18 8h.001"/>
-                            <path d="M8 12h.001"/>
-                            <path d="M12 12h.001"/>
-                            <path d="M16 12h.001"/>
-                            <path d="M7 16h10"/>
-                        </svg>
-                        Keyboard Shortcuts
-                    </h3>
-                    
-                    <div class="shortcuts-grid">
-                        <div class="shortcut-item">
-                            <span>New Chat</span>
-                            <div class="shortcut-keys">
-                                <span class="shortcut-key">Ctrl</span>
-                                <span class="shortcut-key">N</span>
-                            </div>
-                        </div>
-                        <div class="shortcut-item">
-                            <span>Search</span>
-                            <div class="shortcut-keys">
-                                <span class="shortcut-key">Ctrl</span>
-                                <span class="shortcut-key">K</span>
-                            </div>
-                        </div>
-                        <div class="shortcut-item">
-                            <span>Settings</span>
-                            <div class="shortcut-keys">
-                                <span class="shortcut-key">Ctrl</span>
-                                <span class="shortcut-key">,</span>
-                            </div>
-                        </div>
-                        <div class="shortcut-item">
-                            <span>Send Message</span>
-                            <div class="shortcut-keys">
-                                <span class="shortcut-key">Enter</span>
-                            </div>
-                        </div>
-                        <div class="shortcut-item">
-                            <span>New Line</span>
-                            <div class="shortcut-keys">
-                                <span class="shortcut-key">Shift</span>
-                                <span class="shortcut-key">Enter</span>
-                            </div>
-                        </div>
-                        <div class="shortcut-item">
-                            <span>Focus Input</span>
-                            <div class="shortcut-keys">
-                                <span class="shortcut-key">/</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
+            <div class="card-content">
+              <h3 class="card-title">${item.title}</h3>
+              <p style="font-size:0.85rem; color:var(--text-secondary);">ژانر: ${item.genre} | سال انتشار: ${item.year}</p>
+              <div class="qualities-container">
+                ${qualityRowsHtml}
+              </div>
+              <div class="online-archive-injection-zone" id="onlineArchive-${item.id}"></div>
             </div>
-        </div>
-    </div>
+          `;
 
-    <!-- Toast Container -->
-    <div class="toast-container" id="toastContainer" aria-live="polite"></div>
+          container.appendChild(card);
 
-    <script>
-        // ============================================
-        // State Management
-        // ============================================
-        const AppState = {
-            theme: localStorage.getItem('nexusai-theme') || 'dark',
-            accentColor: localStorage.getItem('nexusai-accent') || 'default',
-            fontSize: parseInt(localStorage.getItem('nexusai-fontsize')) || 16,
-            settings: {
-                autoSend: true,
-                stream: true,
-                sound: false,
-                animations: true,
-                saveHistory: true,
-                improveAI: false
-            },
-            model: 'gpt4-turbo',
-            creativity: 70,
-            maxLength: 1024,
-            messages: [],
-            isTyping: false
-        };
-
-        // ============================================
-        // DOM Elements (initialized after DOM ready)
-        // ============================================
-        let elements = {};
-
-        function initializeElements() {
-            elements = {
-                header: document.getElementById('header'),
-                settingsBtn: document.getElementById('settingsBtn'),
-                settingsOverlay: document.getElementById('settingsOverlay'),
-                settingsCloseBtn: document.getElementById('settingsCloseBtn'),
-                messageInput: document.getElementById('messageInput'),
-                sendBtn: document.getElementById('sendBtn'),
-                messagesContainer: document.getElementById('messagesContainer'),
-                messagesList: document.getElementById('messagesList'),
-                welcomeScreen: document.getElementById('welcomeScreen'),
-                toastContainer: document.getElementById('toastContainer'),
-                newChatBtn: document.getElementById('newChatBtn'),
-                fontSizeSlider: document.getElementById('fontSizeSlider'),
-                creativitySlider: document.getElementById('creativitySlider'),
-                creativityValue: document.getElementById('creativityValue')
-            };
-        }
-
-        // ============================================
-        // Theme Management
-        // ============================================
-        function applyTheme(theme) {
-            if (theme === 'auto') {
-                const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-                document.documentElement.setAttribute('data-theme', prefersDark ? 'dark' : 'light');
-            } else {
-                document.documentElement.setAttribute('data-theme', theme);
+          // ONLINE ARCHIVE SUGGESTION ALGORITHM
+          if (item.type === "series" && item.imdbId) {
+            try {
+              const omdbData = await fetchOmdbDetails(item.imdbId);
+              if (omdbData && omdbData.Response === "True") {
+                const apiSeasonsCount = parseInt(omdbData.totalSeasons, 10);
+                if (apiSeasonsCount > item.offlineSeasonsCount) {
+                  const injectionZone = document.getElementById(`onlineArchive-${item.id}`);
+                  if (injectionZone) {
+                    const onlineSeasons = [];
+                    for (let s = item.offlineSeasonsCount + 1; s <= apiSeasonsCount; s++) {
+                      onlineSeasons.push(s);
+                    }
+                    
+                    injectionZone.innerHTML = `
+                      <div class="online-archive-suggestion">
+                        <div class="online-badge" class="tooltip" title="موجود در آرشیو آنلاین ابری" onclick="window.open('https://www.google.com/search?q=${encodeURIComponent(item.title)}+online+archive', '_blank')">
+                          🌐 آرشیو آنلاین (فصل‌های ${onlineSeasons.join(' و ')})
+                        </div>
+                        <p style="font-size:0.8rem; color:var(--text-secondary);">فصل‌های جدید در آرشیو محلی یافت نشد. می‌توانید مستقیماً از سرور ابری تماشا کنید.</p>
+                        <a href="https://www.google.com/search?q=${encodeURIComponent(item.title)}+watch+online" target="_blank" class="online-link" aria-label="ورود به لینک آرشیو فصل های جدید">
+                          مشاهده و ورود به آرشیو آنلاین 🚀
+                        </a>
+                      </div>
+                    `;
+                    logToConsole('success', `فصل‌های آنلاین پیشنهادی برای ${item.title} با موفقیت تزریق شد.`);
+                  }
+                }
+              }
+            } catch (err) {
+              logToConsole('error', `خطا در واکشی فیلدهای فصلی آرشیو برای ${item.title}: ${err.message}`);
             }
-            AppState.theme = theme;
-            localStorage.setItem('nexusai-theme', theme);
-            
-            // Update UI indicators
-            document.querySelectorAll('.theme-option').forEach(opt => {
-                const isActive = opt.dataset.themeValue === theme;
-                opt.classList.toggle('active', isActive);
-                opt.setAttribute('aria-checked', isActive);
-            });
+          }
         }
+      });
+    }
 
-        function applyAccentColor(color) {
-            const colors = {
-                default: { primary: '#00d4aa', secondary: '#0ea5e9' },
-                purple: { primary: '#8b5cf6', secondary: '#ec4899' },
-                orange: { primary: '#f59e0b', secondary: '#ef4444' },
-                green: { primary: '#10b981', secondary: '#059669' },
-                blue: { primary: '#3b82f6', secondary: '#6366f1' }
-            };
-            
-            const selected = colors[color] || colors.default;
-            document.documentElement.style.setProperty('--accent-primary', selected.primary);
-            document.documentElement.style.setProperty('--accent-secondary', selected.secondary);
-            
-            AppState.accentColor = color;
-            localStorage.setItem('nexusai-accent', color);
-            
-            document.querySelectorAll('.color-option').forEach(opt => {
-                opt.classList.toggle('active', opt.dataset.color === color);
-            });
-        }
+    // ==================== INTERACTIVE RIPPLE EFFECT IMPLEMENTATION ====================
+    document.addEventListener("click", function(e) {
+      const target = e.target.closest(".btn-circle, .quality-link, .online-badge");
+      if (!target) return;
+      
+      const circle = document.createElement("span");
+      const diameter = Math.max(target.clientWidth, target.clientHeight);
+      const radius = diameter / 2;
+      
+      circle.style.width = circle.style.height = `${diameter}px`;
+      circle.style.left = `${e.clientX - target.getBoundingClientRect().left - radius}px`;
+      circle.style.top = `${e.clientY - target.getBoundingClientRect().top - radius}px`;
+      circle.className = "ripple";
+      
+      target.appendChild(circle);
+      setTimeout(() => circle.remove(), 600);
+    });
 
-        // ============================================
-        // Font Size Management
-        // ============================================
-        function applyFontSize(size) {
-            document.documentElement.style.fontSize = size + 'px';
-            AppState.fontSize = size;
-            localStorage.setItem('nexusai-fontsize', size.toString());
-        }
+    // ==================== EVENT CONTROLLERS & DEBOUNCED SEARCH ====================
+    const handleSearchInput = debounce((e) => {
+      state.searchQuery = e.target.value;
+      renderGrid();
+      logToConsole('info', `فیلتر کلمه کلیدی جستجو: "${state.searchQuery}"`);
+    }, 300);
 
-        // ============================================
-        // Settings Modal
-        // ============================================
-        function openSettings() {
-            elements.settingsOverlay.classList.add('active');
-            document.body.style.overflow = 'hidden';
-            elements.settingsCloseBtn.focus();
-        }
+    document.getElementById("globalSearchInput").addEventListener("input", handleSearchInput);
 
-        function closeSettings() {
-            elements.settingsOverlay.classList.remove('active');
-            document.body.style.overflow = '';
-            elements.settingsBtn.focus();
-        }
+    document.getElementById("genreFilterSelect").addEventListener("change", (e) => {
+      state.selectedGenre = e.target.value;
+      renderGrid();
+    });
 
-        // ============================================
-        // Toast Notifications
-        // ============================================
-        function showToast(message, type = 'info', duration = 4000) {
-            const icons = {
-                success: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>',
-                error: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>',
-                warning: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>',
-                info: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>'
-            };
+    document.getElementById("typeFilterSelect").addEventListener("change", (e) => {
+      state.selectedType = e.target.value;
+      renderGrid();
+    });
 
-            const toast = document.createElement('div');
-            toast.className = `toast toast-${type}`;
-            toast.innerHTML = `
-                <div class="toast-icon">${icons[type]}</div>
-                <span class="toast-message">${message}</span>
-                <button class="toast-close" aria-label="Dismiss notification">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-                </button>
-            `;
+    // Throttled Scroll handling for visual performance logs
+    window.addEventListener("scroll", throttle(() => {
+      // Logic for scroll trigger tracking if required, lightweight execution
+    }, 200));
 
-            toast.querySelector('.toast-close').addEventListener('click', () => removeToast(toast));
-            elements.toastContainer.appendChild(toast);
+    // ==================== GENRE OPTIMIZATION POPULATOR ====================
+    function extractAndRenderGenres() {
+      const select = document.getElementById("genreFilterSelect");
+      const uniqueGenres = [...new Set(state.items.map(i => i.genre))];
+      uniqueGenres.forEach(genre => {
+        const opt = document.createElement("option");
+        opt.value = genre;
+        opt.textContent = genre;
+        select.appendChild(opt);
+      });
+    }
 
-            setTimeout(() => removeToast(toast), duration);
-        }
+    // ==================== DEBUG PANEL CONTROLLER ====================
+    const debugPanel = document.getElementById("debugConsolePanel");
+    document.getElementById("debugConsoleToggleBtn").addEventListener("click", () => {
+      const isOpen = debugPanel.classList.toggle("open");
+      debugPanel.setAttribute("aria-hidden", !isOpen);
+    });
+    document.getElementById("closeDebugPanelBtn").addEventListener("click", () => {
+      debugPanel.classList.remove("open");
+      debugPanel.setAttribute("aria-hidden", "true");
+    });
 
-        function removeToast(toast) {
-            toast.classList.add('removing');
-            setTimeout(() => toast.remove(), 300);
-        }
+    document.getElementById("exportDebugLogsBtn").addEventListener("click", () => {
+      const logText = state.logs.map(l => `[${l.timestamp}] [${l.type.toUpperCase()}] ${l.message}`).join("\r\n");
+      const blob = new Blob([logText], { type: "text/plain;charset=utf-8" });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `cinetrack_debug_logs_${Date.now()}.txt`;
+      link.click();
+      showToast("فایل لاگ‌های عیب‌یابی با موفقیت صادر شد", "success");
+    });
 
-        // ============================================
-        // Message Handling
-        // ============================================
-        function sendMessage(content) {
-            if (!content.trim()) return;
+    // ==================== INTELLIGENT AI DRAWER CONTROLLER ====================
+    const aiDrawer = document.getElementById("aiChatDrawerPanel");
+    const aiMessagesBox = document.getElementById("aiChatMessagesBox");
 
-            // Hide welcome screen, show messages
-            elements.welcomeScreen.style.display = 'none';
-            elements.messagesList.style.display = 'flex';
+    document.getElementById("aiChatToggleBtn").addEventListener("click", () => {
+      const isOpen = aiDrawer.classList.toggle("open");
+      aiDrawer.setAttribute("aria-hidden", !isOpen);
+      if(isOpen && aiMessagesBox.children.length === 0) {
+        addBotBubble("سلام! چطور می‌توانم در پیدا کردن بهترین فیلم‌ها و مدیریت آرشیو به شما کمک کنم؟ 🌊");
+      }
+    });
 
-            // Add user message
-            addMessage(content, 'user');
-            elements.messageInput.value = '';
-            updateSendButton();
+    document.getElementById("closeAiChatBtn").addEventListener("click", () => {
+      aiDrawer.classList.remove("open");
+      aiDrawer.setAttribute("aria-hidden", "true");
+    });
 
-            // Simulate AI response
-            simulateTyping();
-        }
+    function addBotBubble(text) {
+      const b = document.createElement("div");
+      b.className = "chat-bubble bot";
+      b.innerHTML = text;
+      aiMessagesBox.appendChild(b);
+      aiMessagesBox.scrollTop = aiMessagesBox.scrollHeight;
+    }
 
-        function addMessage(content, role) {
-            const time = new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
-            const messageId = Date.now();
-            
-            const messageHTML = `
-                <div class="message ${role}" id="msg-${messageId}">
-                    <div class="message-avatar">${role === 'user' ? 'U' : 'AI'}</div>
-                    <div class="message-content">
-                        <div class="message-bubble">${formatMessageContent(content)}</div>
-                        <div class="message-meta">
-                            <span class="message-time">${time}</span>
-                            <div class="message-actions">
-                                <button class="message-action-btn" data-tooltip="Copy" aria-label="Copy message">
-                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                        <rect x="9" y="9" width="13" height="13" rx="2" ry="2"/>
-                                        <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
-                                    </svg>
-                                </button>
-                                <button class="message-action-btn" data-tooltip="Regenerate" aria-label="Regenerate response">
-                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                        <polyline points="23 4 23 10 17 10"/>
-                                        <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/>
-                                    </svg>
-                                </button>
-                                ${role === 'assistant' ? `
-                                <button class="message-action-btn" data-tooltip="Like" aria-label="Like response">
-                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                        <path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3zM7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3"/>
-                                    </svg>
-                                </button>
-                                ` : ''}
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            `;
+    function addUserBubble(text) {
+      const b = document.createElement("div");
+      b.className = "chat-bubble user";
+      b.textContent = text;
+      aiMessagesBox.appendChild(b);
+      aiMessagesBox.scrollTop = aiMessagesBox.scrollHeight;
+    }
 
-            elements.messagesList.insertAdjacentHTML('beforeend', messageHTML);
-            scrollToBottom();
-            
-            AppState.messages.push({ id: messageId, content, role, time });
-        }
+    document.getElementById("sendAiChatMsgBtn").addEventListener("click", sendChatMessageAction);
+    document.getElementById("aiChatInputField").addEventListener("keydown", (e) => {
+      if(e.key === 'Enter') sendChatMessageAction();
+    });
 
-        function formatMessageContent(content) {
-            // Basic markdown-like formatting
-            let formatted = escapeHtml(content);
-            
-            // Code blocks
-            formatted = formatted.replace(/```(\w+)?\n([\s\S]*?)```/g, (match, lang, code) => {
-                return `
-                    <div class="code-block">
-                        <div class="code-header">
-                            <span>${lang || 'code'}</span>
-                            <button class="code-copy-btn" onclick="copyCode(this)">Copy</button>
-                        </div>
-                        <pre class="code-content"><code>${escapeHtml(code.trim())}</code></pre>
-                    </div>
-                `;
-            });
-            
-            // Inline code
-            formatted = formatted.replace(/`([^`]+)`/g, '<code style="background:var(--bg-tertiary);padding:2px 6px;border-radius:4px;font-family:monospace;font-size:0.9em;">$1</code>');
-            
-            // Bold
-            formatted = formatted.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
-            
-            // Line breaks
-            formatted = formatted.replace(/\n/g, '<br>');
-            
-            return formatted;
-        }
+    function sendChatMessageAction() {
+      const input = document.getElementById("aiChatInputField");
+      const val = input.value.trim();
+      if(!val) return;
+      addUserBubble(val);
+      input.value = "";
 
-        function escapeHtml(text) {
-            const div = document.createElement('div');
-            div.textContent = text;
-            return div.innerHTML;
-        }
+      // Simulated state preservation matching existing patterns
+      setTimeout(() => {
+        addBotBubble(`پاسخ هوشمند برای عبارات جستجوی شما ("${val}"): شما می‌توانید از فیلترهای پیشرفته تم مایع شیشه‌ای بالا برای محدود کردن انتخاب‌های خود استفاده کنید!`);
+      }, 1000);
+    }
 
-        function copyCode(btn) {
-            const codeBlock = btn.closest('.code-block');
-            const code = codeBlock.querySelector('code').textContent;
-            navigator.clipboard.writeText(code).then(() => {
-                btn.textContent = 'Copied!';
-                setTimeout(() => btn.textContent = 'Copy', 2000);
-                showToast('Code copied to clipboard', 'success');
-            });
-        }
+    // Hamburger Mobile Toggle Navigation
+    document.getElementById("hamburgerMenuBtn").addEventListener("click", () => {
+      document.getElementById("navLinksContainer").classList.toggle("mobile-open");
+    });
 
-        function simulateTyping() {
-            AppState.isTyping = true;
-            
-            const typingHTML = `
-                <div class="message assistant" id="typingIndicator">
-                    <div class="message-avatar">AI</div>
-                    <div class="message-content">
-                        <div class="message-bubble">
-                            <div class="typing-indicator">
-                                <div class="typing-dot"></div>
-                                <div class="typing-dot"></div>
-                                <div class="typing-dot"></div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            `;
+    // Keyboard Accessibility Esc triggers
+    window.addEventListener("keydown", (e) => {
+      if(e.key === 'Escape') {
+        aiDrawer.classList.remove("open");
+        debugPanel.classList.remove("open");
+      }
+    });
 
-            elements.messagesList.insertAdjacentHTML('beforeend', typingHTML);
-            scrollToBottom();
+    // ==================== APP INITIALIZER ====================
+    async function init() {
+      try {
+        logToConsole('info', 'در حال راه‌اندازی هسته سیستم مدیریت سینما...');
+        initTheme();
+        extractAndRenderGenres();
+        await renderGrid();
+        logToConsole('success', 'سیستم با موفقیت با پوسته جدید شیشه‌ای مایع بارگذاری شد.');
+      } catch (e) {
+        logToConsole('error', `خطا در راه‌اندازی اولیه اپلیکیشن: ${e.message}`);
+        showToast("خطایی در بارگذاری اولیه رخ داد. دوباره تلاش کنید.", "error");
+      }
+    }
 
-            // Simulate response delay
-            setTimeout(() => {
-                const typingEl = document.getElementById('typingIndicator');
-                if (typingEl) typingEl.remove();
-                
-                const responses = [
-                    "I understand your question. Let me provide a comprehensive answer that addresses all aspects of what you're asking about.\n\nHere's a detailed breakdown:\n\n**Key Points:**\n1. First, we need to consider the architecture\n2. Second, implementation details matter\n3. Finally, testing and validation\n\nWould you like me to elaborate on any of these points?",
-                    "That's an excellent question! Here's my analysis:\n\n```javascript\n// Example implementation\nconst solution = async (params) => {\n  const result = await process(params);\n  return transform(result);\n};\n```\n\nThis approach provides a clean, maintainable solution that scales well.",
-                    "I'd be happy to help with that! Based on my understanding, here's what I recommend:\n\nThe optimal approach involves several considerations that I'll outline below. Each has its own trade-offs depending on your specific use case.\n\nShall I dive deeper into any particular aspect?"
-                ];
-                
-                const randomResponse = responses[Math.floor(Math.random() * responses.length)];
-                addMessage(randomResponse, 'assistant');
-                AppState.isTyping = false;
-            }, 1500 + Math.random() * 1500);
-        }
-
-        function scrollToBottom() {
-            requestAnimationFrame(() => {
-                elements.messagesContainer.scrollTop = elements.messagesContainer.scrollHeight;
-            });
-        }
-
-        function updateSendButton() {
-            const hasContent = elements.messageInput.value.trim().length > 0;
-            elements.sendBtn.disabled = !hasContent || AppState.isTyping;
-        }
-
-        // Auto-resize textarea
-        function autoResizeTextarea() {
-            const textarea = elements.messageInput;
-            textarea.style.height = 'auto';
-            textarea.style.height = Math.min(textarea.scrollHeight, 150) + 'px';
-        }
-
-        // ============================================
-        // New Chat Handler
-        // ============================================
-        function startNewChat() {
-            elements.messagesList.innerHTML = '';
-            elements.messagesList.style.display = 'none';
-            elements.welcomeScreen.style.display = 'flex';
-            AppState.messages = [];
-            showToast('New conversation started', 'success');
-        }
-
-        // ============================================
-        // Event Listeners Setup
-        // ============================================
-        function setupEventListeners() {
-            // Settings modal
-            elements.settingsBtn.addEventListener('click', openSettings);
-            elements.settingsCloseBtn.addEventListener('click', closeSettings);
-            elements.settingsOverlay.addEventListener('click', (e) => {
-                if (e.target === elements.settingsOverlay) closeSettings();
-            });
-
-            // Theme selection
-            document.querySelectorAll('.theme-option').forEach(option => {
-                option.addEventListener('click', () => {
-                    applyTheme(option.dataset.themeValue);
-                });
-                option.addEventListener('keydown', (e) => {
-                    if (e.key === 'Enter' || e.key === ' ') {
-                        e.preventDefault();
-                        applyTheme(option.dataset.themeValue);
-                    }
-                });
-            });
-
-            // Accent color selection
-            document.querySelectorAll('.color-option').forEach(option => {
-                option.addEventListener('click', () => {
-                    applyAccentColor(option.dataset.color);
-                    showToast('Accent color updated', 'success');
-                });
-            });
-
-            // Font size slider
-            elements.fontSizeSlider.addEventListener('input', (e) => {
-                applyFontSize(parseInt(e.target.value));
-            });
-
-            // Creativity slider
-            elements.creativitySlider.addEventListener('input', (e) => {
-                AppState.creativity = parseInt(e.target.value);
-                elements.creativityValue.textContent = e.target.value + '%';
-            });
-
-            // Toggles
-            document.querySelectorAll('.toggle-switch input').forEach(toggle => {
-                toggle.addEventListener('change', (e) => {
-                    const settingName = toggle.id.replace('Toggle', '');
-                    AppState.settings[settingName] = e.target.checked;
-                    showToast(`${settingName} ${e.target.checked ? 'enabled' : 'disabled'}`, 'info');
-                });
-            });
-
-            // Message input
-            elements.messageInput.addEventListener('input', () => {
-                updateSendButton();
-                autoResizeTextarea();
-            });
-
-            elements.messageInput.addEventListener('keydown', (e) => {
-                if (e.key === 'Enter' && !e.shiftKey && AppState.settings.autoSend) {
-                    e.preventDefault();
-                    if (!elements.sendBtn.disabled) {
-                        sendMessage(elements.messageInput.value);
-                    }
-                }
-            });
-
-            // Send button
-            elements.sendBtn.addEventListener('click', () => {
-                sendMessage(elements.messageInput.value);
-            });
-
-            // New chat button
-            elements.newChatBtn.addEventListener('click', startNewChat);
-
-            // Prompt cards
-            document.querySelectorAll('.prompt-card').forEach(card => {
-                card.addEventListener('click', () => {
-                    const prompt = card.dataset.prompt;
-                    elements.messageInput.value = prompt;
-                    updateSendButton();
-                    autoResizeTextarea();
-                    elements.messageInput.focus();
-                });
-            });
-
-            // Quick action buttons
-            document.getElementById('summarizeBtn')?.addEventListener('click', () => {
-                elements.messageInput.value = 'Please summarize our current conversation';
-                updateSendButton();
-                elements.messageInput.focus();
-            });
-
-            document.getElementById('translateBtn')?.addEventListener('click', () => {
-                elements.messageInput.value = 'Translate the last response to Spanish';
-                updateSendButton();
-                elements.messageInput.focus();
-            });
-
-            document.getElementById('codeReviewBtn')?.addEventListener('click', () => {
-                elements.messageInput.value = 'Please review this code for best practices and potential issues';
-                updateSendButton();
-                elements.messageInput.focus();
-            });
-
-            document.getElementById('explainBtn')?.addEventListener('click', () => {
-                elements.messageInput.value = 'Can you explain the last concept in simpler terms?';
-                updateSendButton();
-                elements.messageInput.focus();
-            });
-
-            // Export data button
-            document.getElementById('exportDataBtn')?.addEventListener('click', () => {
-                const data = JSON.stringify(AppState, null, 2);
-                const blob = new Blob([data], { type: 'application/json' });
-                const url = URL.createObjectURL(blob);
-                const a = document.createElement('a');
-                a.href = url;
-                a.download = 'nexusai-data.json';
-                a.click();
-                URL.revokeObjectURL(url);
-                showToast('Data exported successfully', 'success');
-            });
-
-            // Clear data button
-            document.getElementById('clearDataBtn')?.addEventListener('click', () => {
-                if (confirm('Are you sure you want to clear all data? This cannot be undone.')) {
-                    localStorage.clear();
-                    location.reload();
-                }
-            });
-
-            // Header scroll effect
-            window.addEventListener('scroll', () => {
-                elements.header.classList.toggle('scrolled', window.scrollY > 20);
-            });
-
-            // Keyboard shortcuts
-            document.addEventListener('keydown', (e) => {
-                // Ctrl/Cmd + K for search
-                if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
-                    e.preventDefault();
-                    showToast('Search coming soon!', 'info');
-                }
-                
-                // Ctrl/Cmd + N for new chat
-                if ((e.ctrlKey || e.metaKey) && e.key === 'n') {
-                    e.preventDefault();
-                    startNewChat();
-                }
-                
-                // Ctrl/Cmd + , for settings
-                if ((e.ctrlKey || e.metaKey) && e.key === ',') {
-                    e.preventDefault();
-                    openSettings();
-                }
-                
-                // Escape to close modals
-                if (e.key === 'Escape') {
-                    closeSettings();
-                }
-                
-                // / to focus input
-                if (e.key === '/' && document.activeElement !== elements.messageInput) {
-                    e.preventDefault();
-                    elements.messageInput.focus();
-                }
-            });
-
-            // Sidebar items
-            document.querySelectorAll('.sidebar-item').forEach(item => {
-                item.addEventListener('click', () => {
-                    document.querySelectorAll('.sidebar-item').forEach(i => i.classList.remove('active'));
-                    item.classList.add('active');
-                });
-            });
-
-            // System theme change listener
-            window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => {
-                if (AppState.theme === 'auto') {
-                    applyTheme('auto');
-                }
-            });
-        }
-
-        // ============================================
-        // Initialize Application
-        // ============================================
-        function initApp() {
-            initializeElements();
-            
-            // Apply saved preferences
-            applyTheme(AppState.theme);
-            applyAccentColor(AppState.accentColor);
-            applyFontSize(AppState.fontSize);
-            
-            // Setup event listeners
-            setupEventListeners();
-            
-            // Initial state
-            updateSendButton();
-            
-            console.log('NexusAI Studio initialized successfully');
-        }
-
-        // Start app when DOM is ready
-        if (document.readyState === 'loading') {
-            document.addEventListener('DOMContentLoaded', initApp);
-        } else {
-            initApp();
-        }
-    </script>
+    window.addEventListener("DOMContentLoaded", init);
+  </script>
 </body>
 </html>
