@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI Digital Companion</title>
+    <title>AI Digital Companion (OpenRouter Edition)</title>
     <style>
         * {
             margin: 0;
@@ -25,7 +25,6 @@
             left: 0;
             z-index: 1;
         }
-        /* واجهة مستخدم شبه مخفية - فقط للتفاعل الأول */
         #ui-layer {
             position: absolute;
             top: 0;
@@ -77,22 +76,21 @@
     </div>
 
     <script>
-        // --- تنظیمات کلیدهای اتصالات ---
-        const GROQ_API_KEY = "YOUR_GROQ_API_KEY_HERE"; // کلید گروک خود را اینجا بگذارید
+        // --- تنظیمات OpenRouter ---
+        const OPENROUTER_API_KEY = "YOUR_OPENROUTER_API_KEY_HERE"; // کلید اپن‌رایتر خودت را اینجا بذار
+        const MODEL_NAME = "meta-llama/llama-3.3-70b-instruct"; // می‌توانی با هر مدلی در OpenRouter تعویضش کنی
 
         // --- متغیرهای گرافیکی Three.js ---
         let scene, camera, renderer, character, head, leftEye, rightEye, mouth;
         let clock = new THREE.Clock();
         
-        // --- وضعیت‌های انیمیشن (State Machine) ---
-        let currentStatus = 'IDLE'; // IDLE, LISTENING, THINKING, SPEAKING
-        let currentEmotion = 'neutral'; // neutral, happy, sad, thinking, surprised
+        // --- وضعیت‌های سیستم ---
+        let currentStatus = 'IDLE'; 
+        let currentEmotion = 'neutral'; 
 
-        // --- المان‌های DOM ---
         const startBtn = document.getElementById('start-btn');
         const statusIndicator = document.getElementById('status-indicator');
 
-        // اولویت شروع با تعامل کاربر برای باز شدن قفل میکروفون و صدا
         startBtn.addEventListener('click', () => {
             startBtn.style.display = 'none';
             statusIndicator.style.display = 'block';
@@ -100,7 +98,7 @@
             initVoiceSystem();
         });
 
-        // --- ۱. بخش گرافیک و طراحی کاراکتر سه‌بعدی ---
+        // --- ۱. طراحی کاراکتر سه‌بعدی مینیمال پیکساری ---
         function initGraphics() {
             const container = document.getElementById('canvas-container');
             
@@ -111,10 +109,9 @@
             renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
             renderer.setSize(window.innerWidth, window.innerHeight);
             renderer.setPixelRatio(window.devicePixelRatio);
-            renderer.shadowMap.enabled = true;
             container.appendChild(renderer.domElement);
 
-            // نورپردازی سینمایی و نرم
+            // نورپردازی محیطی سینمایی
             const ambientLight = new THREE.AmbientLight(0x666677, 0.8);
             scene.add(ambientLight);
 
@@ -122,22 +119,17 @@
             directionalLight.position.set(5, 5, 4);
             scene.add(directionalLight);
 
-            const pointLight = new THREE.PointLight(0x88ccff, 0.5, 10);
-            pointLight.position.set(-3, -2, 2);
-            scene.add(pointLight);
-
-            // ساخت یک کاراکتر مینیمال و استایلایز شده (شبیه ربات‌های پیکسار)
             character = new THREE.Group();
             
-            // سر کاراکتر
+            // سر
             const headGeo = new THREE.SphereGeometry(0.8, 32, 32);
             const headMat = new THREE.MeshStandardMaterial({ color: 0xdddddf, roughness: 0.2, metalness: 0.1 });
             head = new THREE.Mesh(headGeo, headMat);
             character.add(head);
 
-            // چشم‌ها
+            // چشم‌ها (درخشان)
             const eyeGeo = new THREE.SphereGeometry(0.12, 16, 16);
-            const eyeMat = new THREE.MeshBasicMaterial({ color: 0x00d2ff }); // چشم‌های درخشان آبی
+            const eyeMat = new THREE.MeshBasicMaterial({ color: 0x00d2ff }); 
             
             leftEye = new THREE.Mesh(eyeGeo, eyeMat);
             leftEye.position.set(-0.25, 0.1, 0.7);
@@ -147,7 +139,7 @@
             rightEye.position.set(0.25, 0.1, 0.7);
             head.add(rightEye);
 
-            // دهان (یک خط یا بیضی کوچک برای حالات مختلف)
+            // دهان دیجیتالی
             const mouthGeo = new THREE.CylinderGeometry(0.15, 0.15, 0.05, 16);
             const mouthMat = new THREE.MeshStandardMaterial({ color: 0x33333b, roughness: 0.5 });
             mouth = new THREE.Mesh(mouthGeo, mouthMat);
@@ -161,35 +153,31 @@
             animate();
         }
 
-        // --- ۲. بخش انیمیشن‌های زنده و داینامیک (موتور انیمیشن) ---
+        // --- ۲. موتور انیمیشن و شبیه‌سازی زنده بودن ---
         function animate() {
             requestAnimationFrame(animate);
             const elapsedTime = clock.getElapsedTime();
 
             if (head) {
-                // انیمیشن پایه تنفس و زنده بودن (همیشه اجرا می‌شود)
+                // انیمیشن‌های تنفس پایه
                 head.position.y = Math.sin(elapsedTime * 1.5) * 0.03;
                 head.rotation.z = Math.sin(elapsedTime * 0.5) * 0.02;
 
-                // مدیریت تغییر انیمیشن‌ها بر اساس حالت سیستم (Status)
+                // انیمیشن‌های وابسته به وضعیت (Status)
                 if (currentStatus === 'LISTENING') {
-                    // متمایل شدن به جلو و تکان‌های ریز سر به نشانه تایید
                     head.position.z = THREE.MathUtils.lerp(head.position.z, 0.2, 0.1);
                     head.rotation.x = (Math.sin(elapsedTime * 4) * 0.02) + 0.05;
                 } else if (currentStatus === 'THINKING') {
-                    // نگاه کردن به بالا و چپ و چرخیدن سر
                     head.position.z = THREE.MathUtils.lerp(head.position.z, 0, 0.1);
                     leftEye.position.y = THREE.MathUtils.lerp(leftEye.position.y, 0.2, 0.1);
                     rightEye.position.y = THREE.MathUtils.lerp(rightEye.position.y, 0.2, 0.1);
                     head.rotation.y = THREE.MathUtils.lerp(head.rotation.y, -0.15, 0.05);
                 } else if (currentStatus === 'SPEAKING') {
-                    // تکان خوردن دهان هماهنگ با فرکانس فرضی صدا
                     head.position.z = THREE.MathUtils.lerp(head.position.z, 0.1, 0.1);
                     const mouthScale = 0.5 + Math.abs(Math.sin(elapsedTime * 12)) * 1.5;
                     mouth.scale.set(mouthScale, 1, mouthScale);
                     head.rotation.y = Math.sin(elapsedTime * 2) * 0.05;
                 } else {
-                    // حالت عادی (IDLE) - نگاه کردن تصادفی به اطراف
                     head.position.z = THREE.MathUtils.lerp(head.position.z, 0, 0.05);
                     leftEye.position.y = THREE.MathUtils.lerp(leftEye.position.y, 0.1, 0.1);
                     rightEye.position.y = THREE.MathUtils.lerp(rightEye.position.y, 0.1, 0.1);
@@ -198,11 +186,10 @@
                     }
                 }
 
-                // مدیریت احساسات روی اجزای صورت (Emotion)
                 applyEmotionMetrics();
             }
 
-            // پلک زدن تصادفی کاراکتر
+            // سیستم پلک زدن طبیعی
             if (leftEye && rightEye) {
                 let blink = Math.sin(elapsedTime * 0.8) > 0.98;
                 leftEye.scale.y = blink ? 0.1 : 1;
@@ -215,19 +202,18 @@
         function applyEmotionMetrics() {
             if (currentEmotion === 'happy') {
                 mouth.scale.x = THREE.MathUtils.lerp(mouth.scale.x, 2, 0.1);
-                leftEye.material.color.setHex(0x00ff88); // سبز پرانرژی
+                leftEye.material.color.setHex(0x00ff88); 
                 rightEye.material.color.setHex(0x00ff88);
             } else if (currentEmotion === 'sad') {
                 head.rotation.x = THREE.MathUtils.lerp(head.rotation.x, 0.15, 0.05);
-                leftEye.material.color.setHex(0x5555ff); // آبی تیره ملایم
+                leftEye.material.color.setHex(0x5555ff); 
                 rightEye.material.color.setHex(0x5555ff);
             } else if (currentEmotion === 'surprised') {
                 leftEye.scale.set(1.4, 1.4, 1.4);
                 rightEye.scale.set(1.4, 1.4, 1.4);
-                leftEye.material.color.setHex(0xffaa00); // نارنجی تعجب
+                leftEye.material.color.setHex(0xffaa00); 
                 rightEye.material.color.setHex(0xffaa00);
             } else {
-                // حالت خنثی
                 leftEye.scale.set(1, 1, 1);
                 rightEye.scale.set(1, 1, 1);
                 leftEye.material.color.setHex(0x00d2ff);
@@ -240,32 +226,30 @@
             statusIndicator.innerText = status;
         }
 
-        // --- ۳. سیستم صوتی و اتصال به هوش مصنوعی (Voice & Groq LLM) ---
+        // --- ۳. سیستم ضبط صدا و اتصال به شبکه OpenRouter ---
         function initVoiceSystem() {
-            // استفاده از Web Speech API مرورگر برای تشخیص صدا
             const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
             if (!SpeechRecognition) {
-                alert("Your browser does not support Voice Recognition. Please use Chrome or Edge.");
+                alert("Voice recognition is not supported in this browser. Try Chrome.");
                 return;
             }
 
             const recognition = new SpeechRecognition();
             recognition.continuous = true;
             recognition.interimResults = false;
-            recognition.lang = 'en-US'; // می‌توانید به 'fa-IR' برای فارسی تغییر دهید
+            recognition.lang = 'en-US'; 
 
             recognition.onstart = () => updateStatus('LISTENING');
             
             recognition.onresult = async (event) => {
                 const userText = event.results[event.results.length - 1][0].transcript;
-                console.log("User said:", userText);
+                console.log("User input text:", userText);
                 
-                recognition.stop(); // موقتاً گوش دادن را متوقف کن تا پاسخ آماده شود
-                await askLLM(userText);
+                recognition.stop(); 
+                await askOpenRouter(userText);
             };
 
             recognition.onend = () => {
-                // اگر سیستم در حال صحبت یا فکر نیست، دوباره گوش دادن را فعال کن
                 if (currentStatus === 'IDLE' || currentStatus === 'LISTENING') {
                     recognition.start();
                 }
@@ -273,15 +257,14 @@
 
             recognition.start();
 
-            // ساخت فانکشن داخلی برای فعال‌سازی مجدد میکروفون پس از صحبت کاراکتر
             window.restartListening = () => {
                 updateStatus('LISTENING');
                 try { recognition.start(); } catch(e) {}
             };
         }
 
-        // ارتباط با مدل Llama 3.3 در سرویس Groq
-        async function askLLM(promptText) {
+        // تابع ارتباط با API اوپن‌رایتر
+        async function askOpenRouter(promptText) {
             updateStatus('THINKING');
             
             const systemPrompt = `You are a living virtual companion. You must respond to the user in a natural, conversational way. 
@@ -292,36 +275,47 @@
             }`;
 
             try {
-                const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+                // آدرس Endpoint رسمی OpenRouter
+                const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
                     method: "POST",
                     headers: {
-                        "Authorization": `Bearer ${GROQ_API_KEY}`,
-                        "Content-Type": "application/json"
+                        "Authorization": `Bearer ${OPENROUTER_API_KEY}`,
+                        "Content-Type": "application/json",
+                        "HTTP-Referer": window.location.href, // الزامی برای OpenRouter
+                        "X-Title": "AI Digital Companion"
                     },
                     body: JSON.stringify({
-                        model: "llama-3.3-70b-versatile",
+                        model: MODEL_NAME,
                         messages: [
                             { role: "system", content: systemPrompt },
                             { role: "user", content: promptText }
                         ],
-                        response_format: { type: "json_object" } // اصرار روی خروجی ساختاریافته JSON
+                        // اصرار به ساختار خروجی JSON در مدل‌هایی که پشتیبانی می‌کنند
+                        response_format: { type: "json_object" } 
                     })
                 });
 
                 const data = await response.json();
+                
+                // هندل کردن ارورهای احتمالی خود کامپلیشن اوپن‌رایتر
+                if (!data.choices || data.choices.length === 0) {
+                    throw new Error("Invalid response structural payload from OpenRouter");
+                }
+
+                // استخراج و پارس کردن جیسون داخلی پاسخ مدل
                 const aiResponseData = JSON.parse(data.choices[0].message.content);
                 
                 currentEmotion = aiResponseData.emotion;
                 speak(aiResponseData.text);
 
             } catch (error) {
-                console.error("Error fetching from Groq:", error);
+                console.error("OpenRouter API Error:", error);
                 currentEmotion = 'sad';
-                speak("I encountered a connection issue. Please check your API configuration.");
+                speak("I had trouble connecting to my brain. Please check the OpenRouter API key.");
             }
         }
 
-        // سخن گفتن کاراکتر با استفاده از موتور متن به صدای مرورگر (TTS)
+        // --- ۴. تبدیل متن به گفتار (Text to Speech) ---
         function speak(textToSay) {
             updateStatus('SPEAKING');
             
@@ -331,14 +325,12 @@
             utterance.onend = () => {
                 updateStatus('IDLE');
                 currentEmotion = 'neutral';
-                // بعد از تمام شدن دیالوگ، دوباره میکروفون را فعال کن تا بشنود
                 if (window.restartListening) window.restartListening();
             };
 
             window.speechSynthesis.speak(utterance);
         }
 
-        // هماهنگ‌سازی اندازه صفحه در صورت تغییر ابعاد مرورگر
         window.addEventListener('resize', () => {
             if(camera && renderer) {
                 camera.aspect = window.innerWidth / window.innerHeight;
