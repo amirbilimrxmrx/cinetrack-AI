@@ -4,7 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Nova - AI Companion</title>
-    <!-- Three.js from CDN -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <style>
         * {
@@ -85,7 +84,7 @@
         // ==========================================
         // CONFIGURATION & STATE
         // ==========================================
-        const OPENROUTER_API_KEY = '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'; // Insert your key here
+        const OPENROUTER_API_KEY = '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'; // Replace with your key
         const API_URL = 'https://openrouter.ai/api/v1/chat/completions';
         const MODEL = 'meta-llama/llama-3-70b-instruct'; // Or your preferred model
 
@@ -94,15 +93,15 @@
         let currentEmotion = 'neutral';
         let mouthAmplitude = 0;
 
-        // Memory Architecture (Max 15)
         const MAX_MEMORY_LENGTH = 15;
         let conversationHistory = [
             { 
                 role: "system", 
                 content: `You are Nova, an intelligent, witty, loyal cinematic AI companion. 
-                You speak strictly in Persian (Farsi). Never mention software, code, or APIs. 
-                You MUST output ONLY valid JSON in this exact format, with no markdown formatting or extra text:
-                {"emotion": "happy", "response": "Your Persian response here"}` 
+Speak ONLY in Persian (Farsi). Never use English words unless the user explicitly asks. 
+Keep responses natural, fluent, and free of any repetition. 
+You MUST output ONLY valid JSON in this exact format, with no markdown or extra text:
+{"emotion": "happy", "response": "Your Persian response here"}` 
             }
         ];
 
@@ -112,7 +111,6 @@
         const scene = new THREE.Scene();
         const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000);
         const renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true });
-
         renderer.setSize(window.innerWidth, window.innerHeight);
         document.getElementById('canvas-container').appendChild(renderer.domElement);
 
@@ -127,23 +125,24 @@
         const character = new THREE.Group();
         scene.add(character);
 
-        // Procedural Stylized Head (Blue)
+        // Head
         const headGeo = new THREE.BoxGeometry(2, 1.8, 1.5);
         const headMat = new THREE.MeshPhongMaterial({ color: 0x2288ff, shininess: 50 });
         const head = new THREE.Mesh(headGeo, headMat);
         character.add(head);
 
-        // Eyes
+        // Eyes - keep them as separate objects that can rotate independently
         const eyeGeo = new THREE.SphereGeometry(0.3, 32, 32);
         const eyeMat = new THREE.MeshBasicMaterial({ color: 0xffffff });
         const leftEye = new THREE.Mesh(eyeGeo, eyeMat);
         leftEye.position.set(-0.5, 0.2, 0.76);
         const rightEye = new THREE.Mesh(eyeGeo, eyeMat);
         rightEye.position.set(0.5, 0.2, 0.76);
-        head.add(leftEye);
-        head.add(rightEye);
+        // Important: don't parent eyes to head, add them directly to character so they stay world-oriented
+        character.add(leftEye);
+        character.add(rightEye);
 
-        // Pupils
+        // Pupils (inside eyes)
         const pupilGeo = new THREE.SphereGeometry(0.1, 32, 32);
         const pupilMat = new THREE.MeshBasicMaterial({ color: 0x111111 });
         const leftPupil = new THREE.Mesh(pupilGeo, pupilMat);
@@ -153,7 +152,7 @@
         rightPupil.position.set(0, 0, 0.25);
         rightEye.add(rightPupil);
 
-        // Mouth
+        // Mouth (still attached to head)
         const mouthGeo = new THREE.BoxGeometry(1, 0.1, 0.1);
         const mouthMat = new THREE.MeshBasicMaterial({ color: 0x111111 });
         const mouth = new THREE.Mesh(mouthGeo, mouthMat);
@@ -177,23 +176,23 @@
             switch(emotion.toLowerCase()) {
                 case 'happy':
                     targetEyeScale.y = 1;
-                    targetMouthScale.y = 2; // Smile simulation
-                    targetRotation.x = -0.1;
+                    targetMouthScale.y = 2;
+                    targetRotation.x = -0.03;  // very slight tilt
                     break;
                 case 'thinking':
                     targetEyeScale.y = 0.8;
-                    targetRotation.x = 0.2;
-                    targetRotation.y = 0.3;
+                    targetRotation.x = 0.05;   // gentle upward glance, not extreme
+                    targetRotation.y = 0.1;
                     break;
                 case 'confused':
                     targetEyeScale.y = 0.6;
                     targetRotation.x = 0;
-                    targetRotation.y = -0.2;
+                    targetRotation.y = -0.1;
                     break;
                 case 'sad':
                     targetEyeScale.y = 0.5;
                     targetMouthScale.y = 0.5;
-                    targetRotation.x = 0.3;
+                    targetRotation.x = 0.1;
                     break;
                 default: // Neutral
                     targetEyeScale.y = 1;
@@ -207,30 +206,59 @@
             requestAnimationFrame(animate);
             const time = clock.getElapsedTime();
 
-            // Idle Behavior: Breathing (Y position sine wave)
+            // Breathing
             character.position.y = Math.sin(time * 2) * 0.05;
-            
-            // Idle Behavior: Blinking
+
+            // Blinking
             if (Math.random() > 0.99) {
                 leftEye.scale.y = 0.1;
                 rightEye.scale.y = 0.1;
             } else {
-                // Lerp back to target eye scale based on emotion
                 leftEye.scale.y = THREE.MathUtils.lerp(leftEye.scale.y, targetEyeScale.y, 0.2);
                 rightEye.scale.y = THREE.MathUtils.lerp(rightEye.scale.y, targetEyeScale.y, 0.2);
             }
 
-            // Lip Sync Simulation
+            // Lip sync
             if (isSpeaking) {
-                // Random flutter based on volume amplitude
                 mouth.scale.y = THREE.MathUtils.lerp(mouth.scale.y, 1 + (Math.random() * mouthAmplitude * 4), 0.3);
             } else {
                 mouth.scale.y = THREE.MathUtils.lerp(mouth.scale.y, targetMouthScale.y, 0.2);
             }
 
-            // Smooth head rotation transitions
-            head.rotation.x = THREE.MathUtils.lerp(head.rotation.x, targetRotation.x + (Math.sin(time) * 0.02), 0.05);
-            head.rotation.y = THREE.MathUtils.lerp(head.rotation.y, targetRotation.y + (Math.cos(time * 0.5) * 0.05), 0.05);
+            // Smooth head rotation
+            head.rotation.x = THREE.MathUtils.lerp(head.rotation.x, targetRotation.x + (Math.sin(time) * 0.01), 0.05);
+            head.rotation.y = THREE.MathUtils.lerp(head.rotation.y, targetRotation.y + (Math.cos(time * 0.5) * 0.02), 0.05);
+
+            // Natural eye tracking - pupils look toward the camera
+            // World position of the camera
+            const camWorldPos = new THREE.Vector3();
+            camera.getWorldPosition(camWorldPos);
+
+            // For each eye, compute desired pupil offset in eye's local space
+            function updatePupil(eye, pupil) {
+                const eyeWorldPos = new THREE.Vector3();
+                eye.getWorldPosition(eyeWorldPos);
+                
+                // Direction from eye to camera in world space
+                const direction = new THREE.Vector3().subVectors(camWorldPos, eyeWorldPos).normalize();
+                
+                // Transform direction to eye's local space (since eye is not rotated by head, use worldToLocal)
+                // Because eye is a child of character, which only has position, not rotation. We'll simplify:
+                // The eye's local axes are aligned with world axes. So we can use direction directly.
+                // Map to a max offset of 0.15
+                const maxOffset = 0.15;
+                const offsetX = direction.x * maxOffset;
+                const offsetY = direction.y * maxOffset;
+                const offsetZ = direction.z * maxOffset; // typically small because cam is in front
+                
+                // Pupil rest position is (0,0,0.25) inside the eye
+                pupil.position.x = THREE.MathUtils.lerp(pupil.position.x, offsetX, 0.15);
+                pupil.position.y = THREE.MathUtils.lerp(pupil.position.y, offsetY, 0.15);
+                pupil.position.z = THREE.MathUtils.lerp(pupil.position.z, 0.25 + offsetZ, 0.15);
+            }
+
+            updatePupil(leftEye, leftPupil);
+            updatePupil(rightEye, rightPupil);
 
             renderer.render(scene, camera);
         }
@@ -250,7 +278,7 @@
         const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
         const recognition = new SpeechRecognition();
 
-        recognition.lang = 'fa-IR'; // Persian Localization
+        recognition.lang = 'fa-IR';
         recognition.interimResults = false;
         recognition.maxAlternatives = 1;
 
@@ -258,7 +286,6 @@
             if (isRecording) {
                 recognition.stop();
             } else {
-                // System warm-up for audio context
                 if ('speechSynthesis' in window) {
                     window.speechSynthesis.resume();
                 }
@@ -290,15 +317,18 @@
         // ==========================================
         // AI LOGIC & API INTEGRATION
         // ==========================================
-        async function processWithAI(text) {
+        async function processWithAI(text, attempt = 0) {
             // Manage Memory
             conversationHistory.push({ role: "user", content: text });
             if (conversationHistory.length > MAX_MEMORY_LENGTH) {
-                // Keep system prompt, remove oldest user/assistant pair
                 conversationHistory.splice(1, 2);
             }
 
             try {
+                // Abort controller for timeout
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), 15000); // 15 seconds
+
                 const response = await fetch(API_URL, {
                     method: 'POST',
                     headers: {
@@ -308,16 +338,20 @@
                     body: JSON.stringify({
                         model: MODEL,
                         messages: conversationHistory
-                    })
+                    }),
+                    signal: controller.signal
                 });
+
+                clearTimeout(timeoutId);
+
+                if (!response.ok) throw new Error(`API status ${response.status}`);
 
                 const data = await response.json();
                 const rawOutput = data.choices[0].message.content;
                 
-                // Defensive JSON Parsing Layer
+                // Defensive JSON Parsing
                 let parsedData;
                 try {
-                    // Strip markdown backticks if AI hallucinates them
                     let cleanJson = rawOutput.replace(/```json/g, '').replace(/```/g, '').trim();
                     parsedData = JSON.parse(cleanJson);
                 } catch (e) {
@@ -325,9 +359,31 @@
                     throw new Error("Malformed JSON");
                 }
 
+                let responseText = parsedData.response || "متاسفم، مشکلی پیش آمد.";
+                let emotion = parsedData.emotion || 'neutral';
+
+                // --- Persian-only enforcement ---
+                const hasPersian = /[\u0600-\u06FF]/.test(responseText);
+                const hasLatin = /[a-zA-Z]/.test(responseText);
+                
+                if (hasLatin && !hasPersian && attempt < 2) {
+                    // Probable English output – retry with a stricter instruction
+                    conversationHistory.pop(); // remove the user message we just added
+                    conversationHistory.push({
+                        role: "system",
+                        content: "The last assistant response was in English. You must reply ONLY in Persian. Output JSON with Persian response."
+                    });
+                    return processWithAI(text, attempt + 1);
+                }
+
+                // --- Repetition filter ---
+                responseText = removeRepetition(responseText);
+
+                // Update conversation memory with the raw AI output (keep JSON string)
                 conversationHistory.push({ role: "assistant", content: rawOutput });
-                setEmotion(parsedData.emotion || 'neutral');
-                speakText(parsedData.response);
+
+                setEmotion(emotion);
+                speakText(responseText);
 
             } catch (error) {
                 console.error("API Error:", error);
@@ -337,14 +393,34 @@
             }
         }
 
+        // Simple repetition remover: if the same word appears more than 3 times consecutively, truncate
+        function removeRepetition(text) {
+            const words = text.split(/\s+/);
+            if (words.length < 4) return text;
+            let cleaned = [words[0]];
+            let repeatCount = 1;
+            for (let i = 1; i < words.length; i++) {
+                if (words[i] === words[i-1]) {
+                    repeatCount++;
+                    if (repeatCount <= 3) {
+                        cleaned.push(words[i]);
+                    }
+                    // else skip it
+                } else {
+                    repeatCount = 1;
+                    cleaned.push(words[i]);
+                }
+            }
+            return cleaned.join(' ');
+        }
+
         function speakText(text) {
             if ('speechSynthesis' in window) {
-                // Safe-Speak: Cancel previous utterances to fix Garbage Collection bugs
-                window.speechSynthesis.cancel();
+                window.speechSynthesis.cancel(); // Stop any previous speech
 
                 const utterance = new SpeechSynthesisUtterance(text);
                 utterance.lang = 'fa-IR';
-                utterance.pitch = 1.15; // Cinematic tone tuning
+                utterance.pitch = 1.15;
                 utterance.rate = 1.0;
 
                 utterance.onstart = () => {
@@ -353,6 +429,22 @@
                 };
                 
                 utterance.onend = () => {
+                    isSpeaking = false;
+                    mouthAmplitude = 0;
+                    setEmotion('neutral');
+                };
+
+                // Safety: if speech gets stuck (e.g., no onend called), force reset after timeout
+                const safetyTimeout = setTimeout(() => {
+                    if (isSpeaking) {
+                        isSpeaking = false;
+                        mouthAmplitude = 0;
+                        setEmotion('neutral');
+                    }
+                }, text.length * 100 + 5000); // Estimate based on text length
+
+                utterance.onend = () => {
+                    clearTimeout(safetyTimeout);
                     isSpeaking = false;
                     mouthAmplitude = 0;
                     setEmotion('neutral');
