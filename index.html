@@ -1,17 +1,17 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="fa">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI Digital Companion - Persian Cinema Assistant</title>
+    <title>AI Digital Companion - Funny Persian Assistant</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         
         body, html {
             width: 100%; height: 100%; overflow: hidden;
-            background-color: #a5d631; /* Bright green background */
+            background-color: #a5d631; /* Bright green background from reference image */
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            direction: rtl; /* Set layout for Persian */
+            direction: rtl;
         }
         
         #canvas-container {
@@ -64,7 +64,6 @@
     <script>
         // --- API Configuration ---
         const OPENROUTER_API_KEY = "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"; 
-        // Using GPT-4o-Mini via OpenRouter for perfect JSON structure and excellent Persian
         const MODEL_NAME = "openai/gpt-4o-mini"; 
 
         // --- Graphics Variables ---
@@ -75,8 +74,18 @@
         let currentStatus = 'IDLE'; 
         let currentEmotion = 'neutral'; 
         let isInitialized = false;
+        let availableVoices = [];
 
         const micBtn = document.getElementById('mic-btn');
+
+        // Load voices asynchronously to prevent empty speech queues
+        function loadVoices() {
+            availableVoices = window.speechSynthesis.getVoices();
+        }
+        loadVoices();
+        if (window.speechSynthesis.onvoiceschanged !== undefined) {
+            window.speechSynthesis.onvoiceschanged = loadVoices;
+        }
 
         micBtn.addEventListener('click', () => {
             if (!isInitialized) {
@@ -88,7 +97,7 @@
             }
         });
 
-        // --- 1. Character Design (Unchanged Visuals) ---
+        // --- 1. Character Setup (Centered Blue Character) ---
         function initGraphics() {
             const container = document.getElementById('canvas-container');
             
@@ -110,12 +119,11 @@
 
             character = new THREE.Group();
             
-            // Blue Head
+            // Blue Boxy-Rounded Head matching reference proportions
             const headGeo = new THREE.BoxGeometry(1.6, 1.2, 1.4); 
             const headMat = new THREE.MeshStandardMaterial({ color: 0x2a8ada, roughness: 0.3, metalness: 0.1 });
             head = new THREE.Mesh(headGeo, headMat);
             
-            // Eyes
             const scleraGeo = new THREE.SphereGeometry(0.25, 32, 32);
             const scleraMat = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.1 });
             const pupilGeo = new THREE.SphereGeometry(0.11, 32, 32);
@@ -135,7 +143,6 @@
             rightEye.position.set(0.35, 0.1, 0.7);
             head.add(rightEye);
 
-            // Mouth
             const mouthGeo = new THREE.PlaneGeometry(0.6, 0.15);
             const mouthMat = new THREE.MeshBasicMaterial({ color: 0x111111, side: THREE.DoubleSide });
             mouth = new THREE.Mesh(mouthGeo, mouthMat);
@@ -148,26 +155,23 @@
             animate();
         }
 
-        // --- 2. Advanced Emotional Animation Engine ---
+        // --- 2. Advanced Emotional Engine ---
         function animate() {
             requestAnimationFrame(animate);
             const elapsedTime = clock.getElapsedTime();
 
             if (head) {
-                // Organic Idle Movement
                 head.position.y = Math.sin(elapsedTime * 1.5) * 0.04;
                 head.rotation.z = Math.sin(elapsedTime * 0.5) * 0.015;
 
-                // Status Base Movements
                 if (currentStatus === 'LISTENING') {
-                    head.position.z = THREE.MathUtils.lerp(head.position.z, 0.4, 0.1); // Leans in
-                    head.rotation.x = (Math.sin(elapsedTime * 3) * 0.02) + 0.05; // Listening nods
+                    head.position.z = THREE.MathUtils.lerp(head.position.z, 0.4, 0.1);
+                    head.rotation.x = (Math.sin(elapsedTime * 3) * 0.02) + 0.05;
                 } else if (currentStatus === 'THINKING') {
-                    head.position.z = THREE.MathUtils.lerp(head.position.z, -0.2, 0.1); // Leans back
-                    head.rotation.y = THREE.MathUtils.lerp(head.rotation.y, -0.2, 0.05); // Looks away
+                    head.position.z = THREE.MathUtils.lerp(head.position.z, -0.2, 0.1);
+                    head.rotation.y = THREE.MathUtils.lerp(head.rotation.y, -0.2, 0.05);
                 } else if (currentStatus === 'SPEAKING') {
                     head.position.z = THREE.MathUtils.lerp(head.position.z, 0.1, 0.1);
-                    // Lip Sync
                     const mouthScaleY = 0.5 + Math.abs(Math.sin(elapsedTime * 18)) * 1.8;
                     mouth.scale.set(mouth.scale.x, mouthScaleY, 1);
                 } else {
@@ -179,11 +183,9 @@
                     }
                 }
 
-                // Complex Emotion Blending
                 applyAdvancedEmotions(elapsedTime);
             }
 
-            // Natural Blinking
             if (leftEye && rightEye && currentEmotion !== 'surprised' && currentEmotion !== 'excited') {
                 let blink = Math.sin(elapsedTime * 1.2) > 0.98;
                 leftEye.scale.y = blink ? 0.05 : leftEye.scale.y;
@@ -194,61 +196,56 @@
         }
 
         function applyAdvancedEmotions(time) {
-            // Target variables to allow smooth lerping
             let tMouthScaleX = 1, tMouthPosY = -0.3;
             let tLeftEyeScale = 1, tRightEyeScale = 1;
-            let tPupilX = 0, tPupilY = 0.19; // Default pupil forward
+            let tPupilX = 0, tPupilY = 0.19; 
             let tHeadRotX = 0;
 
             switch(currentEmotion) {
                 case 'happy':
                     tMouthScaleX = 1.6; tMouthPosY = -0.25;
                     break;
-                case 'excited': // High energy, big eyes, big smile
+                case 'excited':
                     tMouthScaleX = 1.8; tMouthPosY = -0.22;
                     tLeftEyeScale = 1.15; tRightEyeScale = 1.15;
-                    tHeadRotX = Math.sin(time * 8) * 0.05; // Slight bouncing
+                    tHeadRotX = Math.sin(time * 8) * 0.05;
                     break;
                 case 'sad':
                     tMouthScaleX = 0.7; tMouthPosY = -0.38;
-                    tHeadRotX = 0.2; // Head down
-                    tPupilY = 0.15; // Looking down
+                    tHeadRotX = 0.2; tPupilY = 0.15;
                     break;
                 case 'surprised':
                     tMouthScaleX = 0.4; tMouthPosY = -0.3; 
-                    tLeftEyeScale = 1.3; tRightEyeScale = 1.3; // Huge eyes
+                    tLeftEyeScale = 1.3; tRightEyeScale = 1.3;
                     break;
                 case 'confused':
                     tMouthScaleX = 0.8; tMouthPosY = -0.28;
-                    tLeftEyeScale = 1.1; tRightEyeScale = 0.8; // Asymmetrical eyes
+                    tLeftEyeScale = 1.1; tRightEyeScale = 0.8;
                     tHeadRotX = -0.1;
-                    head.rotation.z = THREE.MathUtils.lerp(head.rotation.z, 0.15, 0.1); // Tilt head
+                    head.rotation.z = THREE.MathUtils.lerp(head.rotation.z, 0.15, 0.1);
                     break;
                 case 'proud':
                     tMouthScaleX = 1.3; tMouthPosY = -0.28;
-                    tHeadRotX = -0.15; // Head up, looking down nose
+                    tHeadRotX = -0.15;
                     break;
                 case 'shy':
                     tMouthScaleX = 0.9; tMouthPosY = -0.35;
-                    tHeadRotX = 0.15; // Head down
-                    tPupilY = 0.23; // Looking up from under
-                    tPupilX = 0.05; // Looking slightly side
+                    tHeadRotX = 0.15; tPupilY = 0.23; tPupilX = 0.05;
                     break;
                 case 'nervous':
                     tMouthScaleX = 0.6; tMouthPosY = -0.3;
-                    tPupilX = Math.sin(time * 10) * 0.05; // Eyes darting side to side
+                    tPupilX = Math.sin(time * 10) * 0.05;
                     tLeftEyeScale = 0.9; tRightEyeScale = 0.9;
                     break;
                 case 'thinking':
-                    tPupilX = -0.06; tPupilY = 0.25; // Look up and left
+                    tPupilX = -0.06; tPupilY = 0.25;
                     tMouthScaleX = 0.5;
                     break;
-                default: // neutral
+                default:
                     tMouthScaleX = 1; tMouthPosY = -0.3;
                     break;
             }
 
-            // Apply interpolations smoothly
             mouth.scale.x = THREE.MathUtils.lerp(mouth.scale.x, tMouthScaleX, 0.1);
             if(currentStatus !== 'SPEAKING') mouth.position.y = THREE.MathUtils.lerp(mouth.position.y, tMouthPosY, 0.1);
             
@@ -270,7 +267,7 @@
             }
         }
 
-        // --- 3. Persian Voice Recognition ---
+        // --- 3. Speech Recognition (Persian Language Setup) ---
         function initVoiceSystem() {
             const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
             if (!SpeechRecognition) {
@@ -281,7 +278,7 @@
             const recognition = new SpeechRecognition();
             recognition.continuous = true;
             recognition.interimResults = false;
-            recognition.lang = 'fa-IR'; // Strict Persian
+            recognition.lang = 'fa-IR'; // Force Persian Speech Input
 
             recognition.onstart = () => updateStatus('LISTENING');
             
@@ -305,21 +302,20 @@
             };
         }
 
-        // --- 4. Brain / OpenRouter Integration ---
+        // --- 4. OpenRouter System Integration ---
         async function askOpenRouter(promptText) {
             updateStatus('THINKING');
             
-            // Comprehensive Persona and Output Rules
-            const systemPrompt = `You are "Nova", a highly intelligent, loyal, and charming digital assistant (like JARVIS meets a friendly animated character). 
-            You are speaking to your user. You are witty, deeply helpful, and conversational.
-            CRITICAL RULES:
-            1. You MUST speak and respond ONLY in fluent, natural Persian (Farsi).
-            2. Never act like a computer program. Never mention APIs, code, or being an AI.
-            3. Keep your answers conversational, relatively short, and punchy.
-            4. You must output your response STRICTLY as a JSON object with this exact structure:
+            const systemPrompt = `You are "Nova", an incredibly cinematic, highly intelligent, and playfully witty digital assistant. 
+            You must act exactly like an advanced interactive companion from futuristic animated movies.
+            CRITICAL DIRECTIVES:
+            1. You MUST speak and respond ONLY in natural, fluent Persian (Farsi).
+            2. Your personality is energetic, fun, and highly expressive. Use playful tones.
+            3. Never break character. Never state that you are an AI, code, or a script.
+            4. Output your response STRICTLY as a valid JSON object matching this structure:
             {
-                "emotion": "choose ONE: neutral, happy, sad, thinking, surprised, excited, confused, proud, shy, nervous",
-                "text": "Your Persian response here"
+                "emotion": "choose one: neutral, happy, sad, thinking, surprised, excited, confused, proud, shy, nervous",
+                "text": "Your funny, animated Persian response here (1-2 sentences max)"
             }`;
 
             try {
@@ -329,7 +325,7 @@
                         "Authorization": `Bearer ${OPENROUTER_API_KEY}`,
                         "Content-Type": "application/json",
                         "HTTP-Referer": window.location.href, 
-                        "X-Title": "Nova Digital Companion"
+                        "X-Title": "Nova Funny Companion"
                     },
                     body: JSON.stringify({
                         model: MODEL_NAME,
@@ -341,12 +337,10 @@
                     })
                 });
 
-                if (!response.ok) throw new Error("API Connection Failed");
+                if (!response.ok) throw new Error("API Failure");
                 const data = await response.json();
                 
-                // Advanced JSON cleaning to prevent "Lost train of thought" crashes
                 let content = data.choices[0].message.content;
-                // Strip markdown backticks if the model accidentally includes them
                 content = content.replace(/```json/gi, '').replace(/```/g, '').trim();
                 
                 const aiResponseData = JSON.parse(content);
@@ -354,21 +348,31 @@
                 speak(aiResponseData.text);
 
             } catch (error) {
-                console.warn("Silent System Error handled smoothly:", error);
-                // Graceful fallback in character, in Persian
-                currentEmotion = 'confused';
-                speak("ببخشید، یک لحظه حواسم پرت شد. داشتی چی می‌گفتی؟");
+                console.warn("Handled connection drops cleanly.", error);
+                currentEmotion = 'excited';
+                speak("اوه پسر! کانالمون داشت قطع و وصل می‌شد! دوباره بگو چی گفتی؟");
             }
         }
 
-        // --- 5. Persian Text-To-Speech (TTS) ---
+        // --- 5. Funny Text-To-Speech (TTS) Engine ---
         function speak(textToSay) {
             updateStatus('SPEAKING');
             
+            // Clear out any stuck speech tracks in the browser queue immediately
+            window.speechSynthesis.cancel();
+            
             const utterance = new SpeechSynthesisUtterance(textToSay);
-            utterance.lang = 'fa-IR'; // Force Persian voice
-            utterance.pitch = 1.15; // Slightly higher, friendly voice
-            utterance.rate = 1.0; 
+            utterance.lang = 'fa-IR'; // Target Persian voice profiles
+            
+            // FUNNY VOICE TUNING: Max pitch + fast rate creates a cartoon/chipmunk tone
+            utterance.pitch = 2.0;  
+            utterance.rate = 1.25; 
+
+            // Find an explicit Persian voice if available on system, otherwise fallback
+            if (availableVoices.length > 0) {
+                const faVoice = availableVoices.find(v => v.lang.includes('fa') || v.lang.includes('IR'));
+                if (faVoice) utterance.voice = faVoice;
+            }
 
             utterance.onend = () => {
                 updateStatus('IDLE');
@@ -376,11 +380,12 @@
                 if (window.restartListening) window.restartListening();
             };
 
-            // Small delay to ensure voices are loaded in the browser
-            setTimeout(() => { window.speechSynthesis.speak(utterance); }, 50);
+            // Execution buffer to dodge browser threading blocks
+            setTimeout(() => { 
+                window.speechSynthesis.speak(utterance); 
+            }, 60);
         }
 
-        // Responsive resizing
         window.addEventListener('resize', () => {
             if(camera && renderer) {
                 camera.aspect = window.innerWidth / window.innerHeight;
