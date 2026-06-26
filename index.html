@@ -3,13 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI Digital Companion - Funny Persian Assistant</title>
+    <title>AI Digital Companion - Memory Edition</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         
         body, html {
             width: 100%; height: 100%; overflow: hidden;
-            background-color: #a5d631; /* Bright green background from reference image */
+            background-color: #a5d631; 
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             direction: rtl;
         }
@@ -62,11 +62,32 @@
     </button>
 
     <script>
-        // --- API Configuration ---
+        // --- 1. تنظیمات API و حافظه ---
         const OPENROUTER_API_KEY = "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"; 
         const MODEL_NAME = "openai/gpt-4o-mini"; 
+        
+        // سیستم حافظه (Memory System)
+        let conversationHistory = [];
+        const MAX_MEMORY_LENGTH = 15; // جلوگیری از پر شدن بیش از حد توکن‌ها
 
-        // --- Graphics Variables ---
+        const SYSTEM_PROMPT = `You are "Nova", an intelligent, witty, and loyal digital assistant. 
+        CRITICAL RULES:
+        1. Speak and respond ONLY in natural, conversational Persian (Farsi).
+        2. You have memory of our past conversation. Refer to it if needed to act like a real LLM.
+        3. Never break character. You are a living assistant, not just an API.
+        4. Your output MUST ALWAYS be a valid JSON object matching this exact structure:
+        {
+            "emotion": "choose one: neutral, happy, sad, thinking, surprised, excited, confused",
+            "text": "Your conversational Persian response here"
+        }`;
+
+        // مقداردهی اولیه حافظه
+        function resetMemory() {
+            conversationHistory = [{ role: "system", content: SYSTEM_PROMPT }];
+        }
+        resetMemory();
+
+        // --- 2. متغیرهای گرافیک و وضعیت ---
         let scene, camera, renderer, character, head, leftEye, rightEye, mouth;
         let leftPupil, rightPupil;
         let clock = new THREE.Clock();
@@ -74,18 +95,12 @@
         let currentStatus = 'IDLE'; 
         let currentEmotion = 'neutral'; 
         let isInitialized = false;
-        let availableVoices = [];
+        let speechRecognitionEngine = null;
+
+        // جلوگیری از باگ Garbage Collection مرورگر کروم در حین پخش صدا
+        window.speechUtterances = []; 
 
         const micBtn = document.getElementById('mic-btn');
-
-        // Load voices asynchronously to prevent empty speech queues
-        function loadVoices() {
-            availableVoices = window.speechSynthesis.getVoices();
-        }
-        loadVoices();
-        if (window.speechSynthesis.onvoiceschanged !== undefined) {
-            window.speechSynthesis.onvoiceschanged = loadVoices;
-        }
 
         micBtn.addEventListener('click', () => {
             if (!isInitialized) {
@@ -93,11 +108,13 @@
                 initVoiceSystem();
                 isInitialized = true;
             } else {
-                if (window.restartListening) window.restartListening();
+                if (currentStatus === 'IDLE' || currentStatus === 'LISTENING') {
+                    startListeningSafe();
+                }
             }
         });
 
-        // --- 1. Character Setup (Centered Blue Character) ---
+        // --- 3. گرافیک و انیمیشن (بدون تغییر بصری) ---
         function initGraphics() {
             const container = document.getElementById('canvas-container');
             
@@ -119,7 +136,6 @@
 
             character = new THREE.Group();
             
-            // Blue Boxy-Rounded Head matching reference proportions
             const headGeo = new THREE.BoxGeometry(1.6, 1.2, 1.4); 
             const headMat = new THREE.MeshStandardMaterial({ color: 0x2a8ada, roughness: 0.3, metalness: 0.1 });
             head = new THREE.Mesh(headGeo, headMat);
@@ -155,7 +171,6 @@
             animate();
         }
 
-        // --- 2. Advanced Emotional Engine ---
         function animate() {
             requestAnimationFrame(animate);
             const elapsedTime = clock.getElapsedTime();
@@ -172,15 +187,11 @@
                     head.rotation.y = THREE.MathUtils.lerp(head.rotation.y, -0.2, 0.05);
                 } else if (currentStatus === 'SPEAKING') {
                     head.position.z = THREE.MathUtils.lerp(head.position.z, 0.1, 0.1);
-                    const mouthScaleY = 0.5 + Math.abs(Math.sin(elapsedTime * 18)) * 1.8;
+                    const mouthScaleY = 0.5 + Math.abs(Math.sin(elapsedTime * 15)) * 1.5;
                     mouth.scale.set(mouth.scale.x, mouthScaleY, 1);
                 } else {
                     head.position.z = THREE.MathUtils.lerp(head.position.z, 0, 0.05);
-                    if (Math.floor(elapsedTime) % 6 === 0) {
-                        head.rotation.y = THREE.MathUtils.lerp(head.rotation.y, Math.sin(elapsedTime) * 0.15, 0.05);
-                    } else {
-                        head.rotation.y = THREE.MathUtils.lerp(head.rotation.y, 0, 0.05);
-                    }
+                    head.rotation.y = THREE.MathUtils.lerp(head.rotation.y, (Math.floor(elapsedTime) % 6 === 0) ? Math.sin(elapsedTime) * 0.15 : 0, 0.05);
                 }
 
                 applyAdvancedEmotions(elapsedTime);
@@ -198,52 +209,16 @@
         function applyAdvancedEmotions(time) {
             let tMouthScaleX = 1, tMouthPosY = -0.3;
             let tLeftEyeScale = 1, tRightEyeScale = 1;
-            let tPupilX = 0, tPupilY = 0.19; 
-            let tHeadRotX = 0;
+            let tPupilX = 0, tPupilY = 0.19, tHeadRotX = 0;
 
             switch(currentEmotion) {
-                case 'happy':
-                    tMouthScaleX = 1.6; tMouthPosY = -0.25;
-                    break;
-                case 'excited':
-                    tMouthScaleX = 1.8; tMouthPosY = -0.22;
-                    tLeftEyeScale = 1.15; tRightEyeScale = 1.15;
-                    tHeadRotX = Math.sin(time * 8) * 0.05;
-                    break;
-                case 'sad':
-                    tMouthScaleX = 0.7; tMouthPosY = -0.38;
-                    tHeadRotX = 0.2; tPupilY = 0.15;
-                    break;
-                case 'surprised':
-                    tMouthScaleX = 0.4; tMouthPosY = -0.3; 
-                    tLeftEyeScale = 1.3; tRightEyeScale = 1.3;
-                    break;
-                case 'confused':
-                    tMouthScaleX = 0.8; tMouthPosY = -0.28;
-                    tLeftEyeScale = 1.1; tRightEyeScale = 0.8;
-                    tHeadRotX = -0.1;
-                    head.rotation.z = THREE.MathUtils.lerp(head.rotation.z, 0.15, 0.1);
-                    break;
-                case 'proud':
-                    tMouthScaleX = 1.3; tMouthPosY = -0.28;
-                    tHeadRotX = -0.15;
-                    break;
-                case 'shy':
-                    tMouthScaleX = 0.9; tMouthPosY = -0.35;
-                    tHeadRotX = 0.15; tPupilY = 0.23; tPupilX = 0.05;
-                    break;
-                case 'nervous':
-                    tMouthScaleX = 0.6; tMouthPosY = -0.3;
-                    tPupilX = Math.sin(time * 10) * 0.05;
-                    tLeftEyeScale = 0.9; tRightEyeScale = 0.9;
-                    break;
-                case 'thinking':
-                    tPupilX = -0.06; tPupilY = 0.25;
-                    tMouthScaleX = 0.5;
-                    break;
-                default:
-                    tMouthScaleX = 1; tMouthPosY = -0.3;
-                    break;
+                case 'happy': tMouthScaleX = 1.6; tMouthPosY = -0.25; break;
+                case 'excited': tMouthScaleX = 1.8; tMouthPosY = -0.22; tLeftEyeScale = 1.15; tRightEyeScale = 1.15; break;
+                case 'sad': tMouthScaleX = 0.7; tMouthPosY = -0.38; tHeadRotX = 0.2; tPupilY = 0.15; break;
+                case 'surprised': tMouthScaleX = 0.4; tMouthPosY = -0.3; tLeftEyeScale = 1.3; tRightEyeScale = 1.3; break;
+                case 'confused': tMouthScaleX = 0.8; tMouthPosY = -0.28; tLeftEyeScale = 1.1; tRightEyeScale = 0.8; break;
+                case 'thinking': tPupilX = -0.06; tPupilY = 0.25; tMouthScaleX = 0.5; break;
+                default: tMouthScaleX = 1; tMouthPosY = -0.3; break;
             }
 
             mouth.scale.x = THREE.MathUtils.lerp(mouth.scale.x, tMouthScaleX, 0.1);
@@ -260,63 +235,57 @@
 
         function updateStatus(status) {
             currentStatus = status;
-            if (status === 'LISTENING') {
-                micBtn.classList.add('listening');
-            } else {
-                micBtn.classList.remove('listening');
-            }
+            if (status === 'LISTENING') micBtn.classList.add('listening');
+            else micBtn.classList.remove('listening');
         }
 
-        // --- 3. Speech Recognition (Persian Language Setup) ---
+        // --- 4. سیستم تشخیص صدای جدید و ایزوله ---
         function initVoiceSystem() {
             const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-            if (!SpeechRecognition) {
-                alert("مرورگر شما از تشخیص صدا پشتیبانی نمی‌کند. لطفا از گوگل کروم استفاده کنید.");
-                return;
-            }
+            if (!SpeechRecognition) return alert("لطفا از مرورگر گوگل کروم استفاده کنید.");
 
-            const recognition = new SpeechRecognition();
-            recognition.continuous = true;
-            recognition.interimResults = false;
-            recognition.lang = 'fa-IR'; // Force Persian Speech Input
+            speechRecognitionEngine = new SpeechRecognition();
+            speechRecognitionEngine.continuous = false; // جلوگیری از لوپ شدن
+            speechRecognitionEngine.interimResults = false;
+            speechRecognitionEngine.lang = 'fa-IR'; 
 
-            recognition.onstart = () => updateStatus('LISTENING');
+            speechRecognitionEngine.onstart = () => updateStatus('LISTENING');
             
-            recognition.onresult = async (event) => {
-                const userText = event.results[event.results.length - 1][0].transcript;
-                recognition.stop(); 
-                await askOpenRouter(userText);
+            speechRecognitionEngine.onresult = async (event) => {
+                const userText = event.results[event.results.length - 1][0].transcript.trim();
+                if (userText) await processConversation(userText);
             };
 
-            recognition.onend = () => {
-                if (currentStatus === 'IDLE' || currentStatus === 'LISTENING') {
-                    try { recognition.start(); } catch(e) {}
-                }
+            speechRecognitionEngine.onerror = (e) => {
+                if(e.error !== 'aborted' && currentStatus === 'LISTENING') updateStatus('IDLE');
             };
 
-            recognition.start();
-
-            window.restartListening = () => {
-                updateStatus('LISTENING');
-                try { recognition.start(); } catch(e) {}
+            speechRecognitionEngine.onend = () => {
+                if (currentStatus === 'LISTENING') updateStatus('IDLE');
             };
+
+            startListeningSafe();
         }
 
-        // --- 4. OpenRouter System Integration ---
-        async function askOpenRouter(promptText) {
+        function startListeningSafe() {
+            if(currentStatus === 'SPEAKING' || currentStatus === 'THINKING') return; // جلوگیری از تداخل
+            try { 
+                if(speechRecognitionEngine) speechRecognitionEngine.start(); 
+            } catch(e) {}
+        }
+
+        // --- 5. منطق ارسال به API با حافظه (Memory) ---
+        async function processConversation(userText) {
             updateStatus('THINKING');
             
-            const systemPrompt = `You are "Nova", an incredibly cinematic, highly intelligent, and playfully witty digital assistant. 
-            You must act exactly like an advanced interactive companion from futuristic animated movies.
-            CRITICAL DIRECTIVES:
-            1. You MUST speak and respond ONLY in natural, fluent Persian (Farsi).
-            2. Your personality is energetic, fun, and highly expressive. Use playful tones.
-            3. Never break character. Never state that you are an AI, code, or a script.
-            4. Output your response STRICTLY as a valid JSON object matching this structure:
-            {
-                "emotion": "choose one: neutral, happy, sad, thinking, surprised, excited, confused, proud, shy, nervous",
-                "text": "Your funny, animated Persian response here (1-2 sentences max)"
-            }`;
+            // اضافه کردن حرف کاربر به حافظه
+            conversationHistory.push({ role: "user", content: userText });
+
+            // کنترل طول حافظه برای جلوگیری از ارور توکن
+            if (conversationHistory.length > MAX_MEMORY_LENGTH) {
+                // نگه داشتن پرامپت سیستم (ایندکس صفر) و حذف قدیمی‌ترین پیام‌ها
+                conversationHistory.splice(1, 2); 
+            }
 
             try {
                 const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
@@ -325,14 +294,11 @@
                         "Authorization": `Bearer ${OPENROUTER_API_KEY}`,
                         "Content-Type": "application/json",
                         "HTTP-Referer": window.location.href, 
-                        "X-Title": "Nova Funny Companion"
+                        "X-Title": "Nova AI"
                     },
                     body: JSON.stringify({
                         model: MODEL_NAME,
-                        messages: [
-                            { role: "system", content: systemPrompt },
-                            { role: "user", content: promptText }
-                        ],
+                        messages: conversationHistory,
                         response_format: { type: "json_object" } 
                     })
                 });
@@ -340,50 +306,59 @@
                 if (!response.ok) throw new Error("API Failure");
                 const data = await response.json();
                 
-                let content = data.choices[0].message.content;
-                content = content.replace(/```json/gi, '').replace(/```/g, '').trim();
+                let rawContent = data.choices[0].message.content;
                 
-                const aiResponseData = JSON.parse(content);
-                currentEmotion = aiResponseData.emotion || 'neutral';
-                speak(aiResponseData.text);
+                // اضافه کردن جواب هوش مصنوعی به حافظه تا یادش بمونه
+                conversationHistory.push({ role: "assistant", content: rawContent });
+
+                // پردازش و نمایش عکس‌العمل
+                let cleanContent = rawContent.replace(/```json/gi, '').replace(/```/g, '').trim();
+                const aiData = JSON.parse(cleanContent);
+                
+                currentEmotion = aiData.emotion || 'neutral';
+                speakSafe(aiData.text);
 
             } catch (error) {
-                console.warn("Handled connection drops cleanly.", error);
-                currentEmotion = 'excited';
-                speak("اوه پسر! کانالمون داشت قطع و وصل می‌شد! دوباره بگو چی گفتی؟");
+                console.warn(error);
+                currentEmotion = 'confused';
+                speakSafe("فکر کنم یه لحظه اینترنتم قطع شد. چی گفتی؟");
+                // حذف پیام کاربر از حافظه در صورت قطعی اینترنت
+                conversationHistory.pop();
             }
         }
 
-        // --- 5. Funny Text-To-Speech (TTS) Engine ---
-        function speak(textToSay) {
+        // --- 6. سیستم گفتار ایمن (رفع باگ تکرار کلمه) ---
+        function speakSafe(textToSay) {
             updateStatus('SPEAKING');
             
-            // Clear out any stuck speech tracks in the browser queue immediately
+            // قطع کردن اجباری هر صدایی که گیر کرده
             window.speechSynthesis.cancel();
             
             const utterance = new SpeechSynthesisUtterance(textToSay);
-            utterance.lang = 'fa-IR'; // Target Persian voice profiles
-            
-            // FUNNY VOICE TUNING: Max pitch + fast rate creates a cartoon/chipmunk tone
-            utterance.pitch = 2.0;  
-            utterance.rate = 1.25; 
+            utterance.lang = 'fa-IR'; 
+            utterance.pitch = 1.1;  
+            utterance.rate = 1.0; 
 
-            // Find an explicit Persian voice if available on system, otherwise fallback
-            if (availableVoices.length > 0) {
-                const faVoice = availableVoices.find(v => v.lang.includes('fa') || v.lang.includes('IR'));
-                if (faVoice) utterance.voice = faVoice;
-            }
+            // ذخیره رفرنس برای جلوگیری از Garbage Collection در کروم
+            window.speechUtterances.push(utterance);
 
             utterance.onend = () => {
+                window.speechUtterances.length = 0; // پاکسازی مموری صدا
                 updateStatus('IDLE');
                 currentEmotion = 'neutral';
-                if (window.restartListening) window.restartListening();
+                setTimeout(startListeningSafe, 500); // مکث کوتاه قبل از شنیدن مجدد
             };
 
-            // Execution buffer to dodge browser threading blocks
+            utterance.onerror = (e) => {
+                window.speechUtterances.length = 0;
+                updateStatus('IDLE');
+                currentEmotion = 'neutral';
+                setTimeout(startListeningSafe, 500);
+            };
+
             setTimeout(() => { 
                 window.speechSynthesis.speak(utterance); 
-            }, 60);
+            }, 50);
         }
 
         window.addEventListener('resize', () => {
