@@ -1,457 +1,501 @@
 <!DOCTYPE html>
-<html lang="fa" dir="rtl">
+<html lang="fa">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Nova - AI Companion</title>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <title>Nura - AI Companion</title>
     <style>
-        * {
+        @import url('https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;700&display=swap');
+
+        html, body {
             margin: 0;
             padding: 0;
-            box-sizing: border-box;
-        }
-
-        body {
             overflow: hidden;
-            background: linear-gradient(135deg, #b2e672 0%, #8ac744 100%);
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #050505;
+            color: white;
+            font-family: 'Vazirmatn', system-ui, sans-serif;
+            -webkit-font-smoothing: antialiased;
         }
 
         #canvas-container {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100vw;
-            height: 100vh;
-            z-index: 1;
+            position: fixed;
+            inset: 0;
+            z-index: 0;
+            background: linear-gradient(180deg, #0f172a 0%, #4c1d95 50%, #0f172a 100%);
+        }
+
+        /* Invisible UI Overlay */
+        .ui-layer {
+            position: fixed;
+            bottom: 40px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 10;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 12px;
         }
 
         #mic-btn {
-            position: absolute;
-            bottom: 40px;
-            right: 40px;
-            z-index: 10;
-            width: 60px;
-            height: 60px;
+            width: 64px;
+            height: 64px;
             border-radius: 50%;
-            background-color: #ffffff;
-            border: none;
-            cursor: pointer;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
-            transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
             display: flex;
-            justify-content: center;
             align-items: center;
-            color: #333;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            color: white;
         }
 
         #mic-btn:hover {
-            transform: scale(1.1);
-            box-shadow: 0 15px 35px rgba(0,0,0,0.2);
+            background: rgba(255, 255, 255, 0.2);
+            transform: scale(1.05);
+        }
+
+        #mic-btn:active {
+            transform: scale(0.95);
         }
 
         #mic-btn.recording {
-            background-color: #ff4757;
-            color: white;
+            background: rgba(239, 68, 68, 0.3);
+            border-color: #ef4444;
+            box-shadow: 0 0 20px rgba(239, 68, 68, 0.5);
             animation: pulse 1.5s infinite;
         }
 
-        #mic-btn svg {
-            width: 28px;
-            height: 28px;
+        @keyframes pulse {
+            0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); }
+            70% { box-shadow: 0 0 0 15px rgba(239, 68, 68, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
         }
 
-        @keyframes pulse {
-            0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(255, 71, 87, 0.7); }
-            70% { transform: scale(1.1); box-shadow: 0 0 0 15px rgba(255, 71, 87, 0); }
-            100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(255, 71, 87, 0); }
+        #status-text {
+            font-size: 14px;
+            color: rgba(255, 255, 255, 0.6);
+            text-shadow: 0 2px 4px rgba(0,0,0,0.5);
+            height: 20px;
+            font-weight: 700;
+        }
+
+        #subtitles {
+            position: fixed;
+            bottom: 140px;
+            left: 50%;
+            transform: translateX(-50%);
+            max-width: 80%;
+            text-align: center;
+            font-size: 24px;
+            color: white;
+            text-shadow: 0 2px 10px rgba(0,0,0,0.8);
+            opacity: 0;
+            transition: opacity 0.5s ease;
+            z-index: 10;
+            pointer-events: none;
         }
     </style>
 </head>
 <body>
+
     <div id="canvas-container"></div>
+    
+    <div id="subtitles"></div>
 
-    <button id="mic-btn" aria-label="Start recording">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"></path>
-            <path d="M19 10v2a7 7 0 0 1-14 0v-2"></path>
-            <line x1="12" y1="19" x2="12" y2="22"></line>
-        </svg>
-    </button>
+    <div class="ui-layer">
+        <div id="status-text">برای صحبت کلیک کنید</div>
+        <button id="mic-btn" title="Speak">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z" />
+                <path d="M19 10v2a7 7 0 0 1-14 0v-2" />
+                <line x1="12" y1="19" x2="12" y2="23" />
+                <line x1="8" y1="23" x2="16" y2="23" />
+            </svg>
+        </button>
+    </div>
 
+    <!-- Three.js -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r158/three.min.js"></script>
+    
     <script>
         // ==========================================
-        // CONFIGURATION & STATE
+        // 1. STATE MANAGEMENT
         // ==========================================
-        const OPENROUTER_API_KEY = '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'; // Replace with your key
-        const API_URL = 'https://openrouter.ai/api/v1/chat/completions';
-        const MODEL = 'meta-llama/llama-3-70b-instruct'; // Or your preferred model
+        let state = {
+            emotion: 'neutral',
+            isListening: false,
+            isThinking: false,
+            isSpeaking: false,
+            apiKey: localStorage.getItem('openai_api_key') || null
+        };
 
-        let isRecording = false;
-        let isSpeaking = false;
-        let currentEmotion = 'neutral';
-        let mouthAmplitude = 0;
+        const statusText = document.getElementById('status-text');
+        const subtitles = document.getElementById('subtitles');
 
-        const MAX_MEMORY_LENGTH = 15;
-        let conversationHistory = [
-            { 
-                role: "system", 
-                content: `You are Nova, an intelligent, witty, loyal cinematic AI companion. 
-Speak ONLY in Persian (Farsi). Never use English words unless the user explicitly asks. 
-Keep responses natural, fluent, and free of any repetition. 
-You MUST output ONLY valid JSON in this exact format, with no markdown or extra text:
-{"emotion": "happy", "response": "Your Persian response here"}` 
-            }
-        ];
-
-        // ==========================================
-        // THREE.JS SCENE SETUP
-        // ==========================================
-        const scene = new THREE.Scene();
-        const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000);
-        const renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true });
-        renderer.setSize(window.innerWidth, window.innerHeight);
-        document.getElementById('canvas-container').appendChild(renderer.domElement);
-
-        // Lighting
-        const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
-        scene.add(ambientLight);
-        const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
-        directionalLight.position.set(5, 5, 5);
-        scene.add(directionalLight);
-
-        // Character Group (Nova)
-        const character = new THREE.Group();
-        scene.add(character);
-
-        // Head
-        const headGeo = new THREE.BoxGeometry(2, 1.8, 1.5);
-        const headMat = new THREE.MeshPhongMaterial({ color: 0x2288ff, shininess: 50 });
-        const head = new THREE.Mesh(headGeo, headMat);
-        character.add(head);
-
-        // Eyes - keep them as separate objects that can rotate independently
-        const eyeGeo = new THREE.SphereGeometry(0.3, 32, 32);
-        const eyeMat = new THREE.MeshBasicMaterial({ color: 0xffffff });
-        const leftEye = new THREE.Mesh(eyeGeo, eyeMat);
-        leftEye.position.set(-0.5, 0.2, 0.76);
-        const rightEye = new THREE.Mesh(eyeGeo, eyeMat);
-        rightEye.position.set(0.5, 0.2, 0.76);
-        // Important: don't parent eyes to head, add them directly to character so they stay world-oriented
-        character.add(leftEye);
-        character.add(rightEye);
-
-        // Pupils (inside eyes)
-        const pupilGeo = new THREE.SphereGeometry(0.1, 32, 32);
-        const pupilMat = new THREE.MeshBasicMaterial({ color: 0x111111 });
-        const leftPupil = new THREE.Mesh(pupilGeo, pupilMat);
-        leftPupil.position.set(0, 0, 0.25);
-        leftEye.add(leftPupil);
-        const rightPupil = new THREE.Mesh(pupilGeo, pupilMat);
-        rightPupil.position.set(0, 0, 0.25);
-        rightEye.add(rightPupil);
-
-        // Mouth (still attached to head)
-        const mouthGeo = new THREE.BoxGeometry(1, 0.1, 0.1);
-        const mouthMat = new THREE.MeshBasicMaterial({ color: 0x111111 });
-        const mouth = new THREE.Mesh(mouthGeo, mouthMat);
-        mouth.position.set(0, -0.4, 0.76);
-        head.add(mouth);
-
-        camera.position.z = 6;
-
-        // ==========================================
-        // ANIMATION & EMOTION ENGINE
-        // ==========================================
-        const clock = new THREE.Clock();
-
-        // Target states for smooth lerping
-        const targetRotation = { x: 0, y: 0 };
-        const targetEyeScale = { y: 1 };
-        const targetMouthScale = { y: 1 };
-
-        function setEmotion(emotion) {
-            currentEmotion = emotion;
-            switch(emotion.toLowerCase()) {
-                case 'happy':
-                    targetEyeScale.y = 1;
-                    targetMouthScale.y = 2;
-                    targetRotation.x = -0.03;  // very slight tilt
-                    break;
-                case 'thinking':
-                    targetEyeScale.y = 0.8;
-                    targetRotation.x = 0.05;   // gentle upward glance, not extreme
-                    targetRotation.y = 0.1;
-                    break;
-                case 'confused':
-                    targetEyeScale.y = 0.6;
-                    targetRotation.x = 0;
-                    targetRotation.y = -0.1;
-                    break;
-                case 'sad':
-                    targetEyeScale.y = 0.5;
-                    targetMouthScale.y = 0.5;
-                    targetRotation.x = 0.1;
-                    break;
-                default: // Neutral
-                    targetEyeScale.y = 1;
-                    targetMouthScale.y = 1;
-                    targetRotation.x = 0;
-                    targetRotation.y = 0;
-            }
+        function updateStatusText() {
+            if (state.isListening) statusText.textContent = "دارم گوش میدم...";
+            else if (state.isThinking) statusText.textContent = "دارم فکر میکنم...";
+            else if (state.isSpeaking) statusText.textContent = "دارم حرف میزنم...";
+            else statusText.textContent = "برای صحبت کلیک کنید";
         }
 
-        function animate() {
-            requestAnimationFrame(animate);
-            const time = clock.getElapsedTime();
+        // ==========================================
+        // 2. THREE.JS SCENE & PROCEDURAL CHARACTER
+        // ==========================================
+        let scene, camera, renderer, characterGroup, head, leftEye, rightEye, mouth;
+        let clock = new THREE.Clock();
+        let audioLevel = 0;
 
-            // Breathing
-            character.position.y = Math.sin(time * 2) * 0.05;
+        function initThree() {
+            const container = document.getElementById('canvas-container');
+            
+            scene = new THREE.Scene();
+            
+            camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 100);
+            camera.position.set(0, 0.5, 6);
 
-            // Blinking
-            if (Math.random() > 0.99) {
-                leftEye.scale.y = 0.1;
-                rightEye.scale.y = 0.1;
-            } else {
-                leftEye.scale.y = THREE.MathUtils.lerp(leftEye.scale.y, targetEyeScale.y, 0.2);
-                rightEye.scale.y = THREE.MathUtils.lerp(rightEye.scale.y, targetEyeScale.y, 0.2);
-            }
+            renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+            renderer.shadowMap.enabled = true;
+            container.appendChild(renderer.domElement);
 
-            // Lip sync
-            if (isSpeaking) {
-                mouth.scale.y = THREE.MathUtils.lerp(mouth.scale.y, 1 + (Math.random() * mouthAmplitude * 4), 0.3);
-            } else {
-                mouth.scale.y = THREE.MathUtils.lerp(mouth.scale.y, targetMouthScale.y, 0.2);
-            }
+            // Lighting
+            const ambientLight = new THREE.AmbientLight(0xffeedd, 0.6);
+            scene.add(ambientLight);
 
-            // Smooth head rotation
-            head.rotation.x = THREE.MathUtils.lerp(head.rotation.x, targetRotation.x + (Math.sin(time) * 0.01), 0.05);
-            head.rotation.y = THREE.MathUtils.lerp(head.rotation.y, targetRotation.y + (Math.cos(time * 0.5) * 0.02), 0.05);
+            const dirLight = new THREE.DirectionalLight(0xffffff, 1.5);
+            dirLight.position.set(5, 10, 5);
+            dirLight.castShadow = true;
+            scene.add(dirLight);
 
-            // Natural eye tracking - pupils look toward the camera
-            // World position of the camera
-            const camWorldPos = new THREE.Vector3();
-            camera.getWorldPosition(camWorldPos);
+            const rimLight = new THREE.SpotLight(0x7080ff, 1.5);
+            rimLight.position.set(-5, 5, 5);
+            rimLight.angle = 0.3;
+            scene.add(rimLight);
 
-            // For each eye, compute desired pupil offset in eye's local space
-            function updatePupil(eye, pupil) {
-                const eyeWorldPos = new THREE.Vector3();
-                eye.getWorldPosition(eyeWorldPos);
-                
-                // Direction from eye to camera in world space
-                const direction = new THREE.Vector3().subVectors(camWorldPos, eyeWorldPos).normalize();
-                
-                // Transform direction to eye's local space (since eye is not rotated by head, use worldToLocal)
-                // Because eye is a child of character, which only has position, not rotation. We'll simplify:
-                // The eye's local axes are aligned with world axes. So we can use direction directly.
-                // Map to a max offset of 0.15
-                const maxOffset = 0.15;
-                const offsetX = direction.x * maxOffset;
-                const offsetY = direction.y * maxOffset;
-                const offsetZ = direction.z * maxOffset; // typically small because cam is in front
-                
-                // Pupil rest position is (0,0,0.25) inside the eye
-                pupil.position.x = THREE.MathUtils.lerp(pupil.position.x, offsetX, 0.15);
-                pupil.position.y = THREE.MathUtils.lerp(pupil.position.y, offsetY, 0.15);
-                pupil.position.z = THREE.MathUtils.lerp(pupil.position.z, 0.25 + offsetZ, 0.15);
-            }
+            // Character Construction
+            characterGroup = new THREE.Group();
+            scene.add(characterGroup);
 
-            updatePupil(leftEye, leftPupil);
-            updatePupil(rightEye, rightPupil);
+            const bodyMaterial = new THREE.MeshStandardMaterial({ 
+                color: 0xE6C7FF, 
+                roughness: 0.3, 
+                metalness: 0.1,
+                emissive: 0x6b21a8,
+                emissiveIntensity: 0.1
+            });
 
-            renderer.render(scene, camera);
+            const eyeMaterial = new THREE.MeshStandardMaterial({ color: 0x1a1a1a, roughness: 0.1 });
+            const mouthMaterial = new THREE.MeshStandardMaterial({ color: 0x831843, side: THREE.DoubleSide });
+            const highlightMaterial = new THREE.MeshStandardMaterial({ color: 0xffffff, emissive: 0xffffff, emissiveIntensity: 0.5 });
+
+            // Body
+            const bodyGeo = new THREE.CapsuleGeometry(0.8, 1, 8, 16);
+            const bodyMesh = new THREE.Mesh(bodyGeo, bodyMaterial);
+            bodyMesh.position.y = -1.5;
+            characterGroup.add(bodyMesh);
+
+            // Head Group
+            head = new THREE.Group();
+            head.position.y = 0.5;
+            characterGroup.add(head);
+
+            // Head
+            const headGeo = new THREE.SphereGeometry(0.8, 32, 32);
+            const headMesh = new THREE.Mesh(headGeo, bodyMaterial);
+            headMesh.castShadow = true;
+            head.add(headMesh);
+
+            // Ears
+            const earGeo = new THREE.ConeGeometry(0.3, 0.6, 16);
+            const leftEar = new THREE.Mesh(earGeo, bodyMaterial);
+            leftEar.position.set(-0.7, 0.5, 0);
+            leftEar.rotation.z = 0.3;
+            head.add(leftEar);
+
+            const rightEar = new THREE.Mesh(earGeo, bodyMaterial);
+            rightEar.position.set(0.7, 0.5, 0);
+            rightEar.rotation.z = -0.3;
+            head.add(rightEar);
+
+            // Eyes
+            const eyeGeo = new THREE.SphereGeometry(0.15, 16, 16);
+            leftEye = new THREE.Mesh(eyeGeo, eyeMaterial);
+            leftEye.position.set(-0.3, 0.1, 0.7);
+            head.add(leftEye);
+
+            rightEye = new THREE.Mesh(eyeGeo, eyeMaterial);
+            rightEye.position.set(0.3, 0.1, 0.7);
+            head.add(rightEye);
+
+            // Eye Highlights
+            const highlightGeo = new THREE.SphereGeometry(0.05, 8, 8);
+            const lHighlight = new THREE.Mesh(highlightGeo, highlightMaterial);
+            lHighlight.position.set(-0.25, 0.15, 0.85);
+            head.add(lHighlight);
+
+            const rHighlight = new THREE.Mesh(highlightGeo, highlightMaterial);
+            rHighlight.position.set(0.35, 0.15, 0.85);
+            head.add(rHighlight);
+
+            // Mouth
+            const mouthGeo = new THREE.SphereGeometry(0.1, 16, 16, 0, Math.PI * 2, 0, Math.PI / 2);
+            mouth = new THREE.Mesh(mouthGeo, mouthMaterial);
+            mouth.position.set(0, -0.3, 0.7);
+            head.add(mouth);
+
+            window.addEventListener('resize', onResize, false);
+            animate();
         }
-        animate();
 
-        // Responsive Design
-        window.addEventListener('resize', () => {
+        function onResize() {
             camera.aspect = window.innerWidth / window.innerHeight;
             camera.updateProjectionMatrix();
             renderer.setSize(window.innerWidth, window.innerHeight);
-        });
+        }
 
         // ==========================================
-        // SPEECH RECOGNITION (STT) & SYNTHESIS (TTS)
+        // 3. PROCEDURAL ANIMATION & BUG FIXES
+        // ==========================================
+        function animate() {
+            requestAnimationFrame(animate);
+            const t = clock.getElapsedTime();
+            const delta = clock.getDelta();
+
+            // Simulate audio level for lip sync
+            if (state.isSpeaking) {
+                audioLevel = Math.abs(Math.sin(t * 12) * Math.sin(t * 7)) * 0.5;
+            } else {
+                audioLevel = THREE.MathUtils.lerp(audioLevel, 0, 0.1);
+            }
+
+            // Breathing & Body Bounce
+            if (characterGroup) {
+                characterGroup.position.y = Math.sin(t * 1.2) * 0.05;
+                characterGroup.scale.y = 1 + audioLevel * 0.1;
+                characterGroup.scale.x = 1 - audioLevel * 0.05;
+            }
+
+            // Head Logic
+            if (head) {
+                let targetX = Math.sin(t * 0.5) * 0.1;
+                let targetY = Math.sin(t * 0.3) * 0.15;
+
+                // Listening State: Lean in and tilt head slightly
+                if (state.isListening) {
+                    targetY += 0.2;
+                    targetX -= 0.1;
+                }
+                
+                // Thinking State: Look up briefly (Fixed eye rolling by keeping it subtle)
+                if (state.isThinking) {
+                    targetX = -0.25; 
+                }
+
+                head.rotation.x = THREE.MathUtils.lerp(head.rotation.x, targetX, 0.05);
+                head.rotation.y = THREE.MathUtils.lerp(head.rotation.y, targetY, 0.05);
+                head.rotation.z = THREE.MathUtils.lerp(head.rotation.z, Math.sin(t * 0.7) * 0.05, 0.05);
+
+                // Happy bounce
+                if (state.emotion === 'excited' || state.emotion === 'happy') {
+                    head.position.y = 0.5 + Math.abs(Math.sin(t * 8)) * 0.1;
+                } else {
+                    head.position.y = 0.5;
+                }
+            }
+
+            // BUG FIX: Natural Eye Saccades (Strict bounding to prevent unnatural rolling)
+            if (leftEye && rightEye) {
+                const saccadeX = Math.sin(t * 0.8) * 0.1; 
+                const saccadeY = Math.sin(t * 0.6) * 0.05 - 0.02; 
+                
+                leftEye.rotation.y = THREE.MathUtils.lerp(leftEye.rotation.y, saccadeX, 0.05);
+                leftEye.rotation.x = THREE.MathUtils.lerp(leftEye.rotation.x, saccadeY, 0.05);
+                
+                rightEye.rotation.y = THREE.MathUtils.lerp(rightEye.rotation.y, saccadeX, 0.05);
+                rightEye.rotation.x = THREE.MathUtils.lerp(rightEye.rotation.x, saccadeY, 0.05);
+
+                // Blinking
+                const blink = Math.sin(t * 0.3) > 0.95 ? 0.1 : 1; 
+                leftEye.scale.y = THREE.MathUtils.lerp(leftEye.scale.y, blink, 0.2);
+                rightEye.scale.y = THREE.MathUtils.lerp(rightEye.scale.y, blink, 0.2);
+            }
+
+            // Mouth Lip Sync
+            if (mouth) {
+                const mouthScale = state.isSpeaking ? 1.5 + Math.random() * 0.5 : 0.5;
+                mouth.scale.y = THREE.MathUtils.lerp(mouth.scale.y, mouthScale, 0.3);
+            }
+
+            renderer.render(scene, camera);
+        }
+
+        // ==========================================
+        // 4. AI & SPEECH PIPELINE (STT -> LLM -> TTS)
         // ==========================================
         const micBtn = document.getElementById('mic-btn');
-        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-        const recognition = new SpeechRecognition();
+        let recognition;
 
-        recognition.lang = 'fa-IR';
-        recognition.interimResults = false;
-        recognition.maxAlternatives = 1;
+        // Initialize Web Speech API
+        if ('webkitSpeechRecognition' in window) {
+            recognition = new webkitSpeechRecognition();
+            recognition.lang = 'fa-IR'; // Strict Farsi
+            recognition.continuous = false;
+            recognition.interimResults = false;
+
+            recognition.onresult = (event) => {
+                const transcript = event.results[0][0].transcript;
+                processUserSpeech(transcript);
+            };
+
+            recognition.onerror = (event) => {
+                console.error("Speech error:", event.error);
+                resetState();
+            };
+
+            recognition.onend = () => {
+                if (state.isListening) resetState();
+            };
+        } else {
+            alert("مرورگر شما پشتیبانی نمی‌کند. لطفاً از کروم یا اج استفاده کنید.");
+        }
 
         micBtn.addEventListener('click', () => {
-            if (isRecording) {
-                recognition.stop();
-            } else {
-                if ('speechSynthesis' in window) {
-                    window.speechSynthesis.resume();
+            if (!state.apiKey) {
+                const key = prompt("برای شروع، کلید API OpenAI خود را وارد کنید:");
+                if (key) {
+                    state.apiKey = key;
+                    localStorage.setItem('openai_api_key', key);
+                } else {
+                    return;
                 }
-                recognition.start();
+            }
+
+            if (state.isSpeaking) {
+                window.speechSynthesis.cancel();
+                resetState();
+                return;
+            }
+
+            if (state.isListening) {
+                recognition.stop();
+                resetState();
+            } else {
+                try {
+                    recognition.start();
+                    state.isListening = true;
+                    state.isThinking = false;
+                    state.isSpeaking = false;
+                    micBtn.classList.add('recording');
+                    updateStatusText();
+                } catch (e) {
+                    console.error(e);
+                }
             }
         });
 
-        recognition.onstart = () => {
-            isRecording = true;
-            micBtn.classList.add('recording');
-            setEmotion('neutral');
-        };
-
-        recognition.onresult = async (event) => {
-            const transcript = event.results[0][0].transcript;
-            isRecording = false;
+        function resetState() {
+            state.isListening = false;
+            state.isThinking = false;
+            state.isSpeaking = false;
             micBtn.classList.remove('recording');
-            
-            setEmotion('thinking');
-            await processWithAI(transcript);
-        };
+            updateStatusText();
+        }
 
-        recognition.onerror = (event) => {
-            console.error('Speech recognition error', event.error);
-            isRecording = false;
+        async function processUserSpeech(text) {
+            state.isListening = false;
+            state.isThinking = true;
             micBtn.classList.remove('recording');
-        };
+            updateStatusText();
 
-        // ==========================================
-        // AI LOGIC & API INTEGRATION
-        // ==========================================
-        async function processWithAI(text, attempt = 0) {
-            // Manage Memory
-            conversationHistory.push({ role: "user", content: text });
-            if (conversationHistory.length > MAX_MEMORY_LENGTH) {
-                conversationHistory.splice(1, 2);
-            }
+            const systemPrompt = `
+                You are "Nura", a living, breathing, animated digital companion.
+                You are warm, funny, empathetic, and deeply curious.
+                ABSOLUTE RULES:
+                1. You MUST ONLY speak in Persian (Farsi). Never use English unless explicitly asked to translate.
+                2. Never output technical jargon, API mentions, or break character.
+                3. Never repeat words. Keep responses concise, fluid, and natural (max 2-3 sentences).
+                4. Your response MUST be valid JSON matching this exact schema:
+                {
+                  "emotion": "happy" | "curious" | "sad" | "excited" | "confused" | "neutral",
+                  "farsi_response": "Your Farsi text here..."
+                }
+                Always remain in character.
+            `;
 
             try {
-                // Abort controller for timeout
-                const controller = new AbortController();
-                const timeoutId = setTimeout(() => controller.abort(), 15000); // 15 seconds
-
-                const response = await fetch(API_URL, {
+                const response = await fetch('https://api.openai.com/v1/chat/completions', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${OPENROUTER_API_KEY}`
+                        'Authorization': `Bearer ${state.apiKey}`
                     },
                     body: JSON.stringify({
-                        model: MODEL,
-                        messages: conversationHistory
-                    }),
-                    signal: controller.signal
+                        model: 'gpt-4o',
+                        messages: [
+                            { role: 'system', content: systemPrompt },
+                            { role: 'user', content: text }
+                        ],
+                        response_format: { type: "json_object" },
+                        frequency_penalty: 0.8, // Prevents repetition
+                        presence_penalty: 0.5,
+                    })
                 });
 
-                clearTimeout(timeoutId);
-
-                if (!response.ok) throw new Error(`API status ${response.status}`);
-
+                if (!response.ok) throw new Error("API Error");
+                
                 const data = await response.json();
-                const rawOutput = data.choices[0].message.content;
+                const payload = JSON.parse(data.choices[0].message.content);
+
+                state.emotion = payload.emotion;
+                state.isThinking = false;
                 
-                // Defensive JSON Parsing
-                let parsedData;
-                try {
-                    let cleanJson = rawOutput.replace(/```json/g, '').replace(/```/g, '').trim();
-                    parsedData = JSON.parse(cleanJson);
-                } catch (e) {
-                    console.error("JSON Parsing failed:", e);
-                    throw new Error("Malformed JSON");
-                }
-
-                let responseText = parsedData.response || "متاسفم، مشکلی پیش آمد.";
-                let emotion = parsedData.emotion || 'neutral';
-
-                // --- Persian-only enforcement ---
-                const hasPersian = /[\u0600-\u06FF]/.test(responseText);
-                const hasLatin = /[a-zA-Z]/.test(responseText);
-                
-                if (hasLatin && !hasPersian && attempt < 2) {
-                    // Probable English output – retry with a stricter instruction
-                    conversationHistory.pop(); // remove the user message we just added
-                    conversationHistory.push({
-                        role: "system",
-                        content: "The last assistant response was in English. You must reply ONLY in Persian. Output JSON with Persian response."
-                    });
-                    return processWithAI(text, attempt + 1);
-                }
-
-                // --- Repetition filter ---
-                responseText = removeRepetition(responseText);
-
-                // Update conversation memory with the raw AI output (keep JSON string)
-                conversationHistory.push({ role: "assistant", content: rawOutput });
-
-                setEmotion(emotion);
-                speakText(responseText);
+                speakText(payload.farsi_response);
 
             } catch (error) {
-                console.error("API Error:", error);
-                // Graceful Fallback
-                setEmotion('confused');
-                speakText("متاسفم، کمی گیج شدم. می‌توانی دوباره تکرار کنی؟");
+                console.error(error);
+                // Graceful in-character failure (No technical messages exposed)
+                state.emotion = 'confused';
+                speakText("نمیفهمم چی شد، دوباره بگو؟");
             }
-        }
-
-        // Simple repetition remover: if the same word appears more than 3 times consecutively, truncate
-        function removeRepetition(text) {
-            const words = text.split(/\s+/);
-            if (words.length < 4) return text;
-            let cleaned = [words[0]];
-            let repeatCount = 1;
-            for (let i = 1; i < words.length; i++) {
-                if (words[i] === words[i-1]) {
-                    repeatCount++;
-                    if (repeatCount <= 3) {
-                        cleaned.push(words[i]);
-                    }
-                    // else skip it
-                } else {
-                    repeatCount = 1;
-                    cleaned.push(words[i]);
-                }
-            }
-            return cleaned.join(' ');
         }
 
         function speakText(text) {
-            if ('speechSynthesis' in window) {
-                window.speechSynthesis.cancel(); // Stop any previous speech
+            state.isSpeaking = true;
+            updateStatusText();
 
-                const utterance = new SpeechSynthesisUtterance(text);
-                utterance.lang = 'fa-IR';
-                utterance.pitch = 1.15;
-                utterance.rate = 1.0;
+            // Show subtitles
+            subtitles.textContent = text;
+            subtitles.style.opacity = 1;
 
-                utterance.onstart = () => {
-                    isSpeaking = true;
-                    mouthAmplitude = 1;
-                };
-                
-                utterance.onend = () => {
-                    isSpeaking = false;
-                    mouthAmplitude = 0;
-                    setEmotion('neutral');
-                };
+            const utterance = new SpeechSynthesisUtterance(text);
+            utterance.lang = 'fa-IR';
+            
+            // Try to find a Persian voice
+            const voices = window.speechSynthesis.getVoices();
+            const persianVoice = voices.find(v => v.lang === 'fa-IR');
+            if (persianVoice) utterance.voice = persianVoice;
 
-                // Safety: if speech gets stuck (e.g., no onend called), force reset after timeout
-                const safetyTimeout = setTimeout(() => {
-                    if (isSpeaking) {
-                        isSpeaking = false;
-                        mouthAmplitude = 0;
-                        setEmotion('neutral');
-                    }
-                }, text.length * 100 + 5000); // Estimate based on text length
+            utterance.onend = () => {
+                resetState();
+                state.emotion = 'neutral';
+                subtitles.style.opacity = 0;
+            };
 
-                utterance.onend = () => {
-                    clearTimeout(safetyTimeout);
-                    isSpeaking = false;
-                    mouthAmplitude = 0;
-                    setEmotion('neutral');
-                };
+            window.speechSynthesis.speak(utterance);
+        }
 
-                window.speechSynthesis.speak(utterance);
-            }
+        // Initialize
+        initThree();
+        
+        // Load voices (some browsers need this event)
+        if (window.speechSynthesis.onvoiceschanged !== undefined) {
+            window.speechSynthesis.onvoiceschanged = () => {};
         }
     </script>
 </body>
